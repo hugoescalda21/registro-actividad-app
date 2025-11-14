@@ -1,54 +1,41 @@
-export const shareViaWhatsApp = (stats, config, selectedMonth, selectedYear) => {
-  const monthName = new Date(selectedYear, selectedMonth).toLocaleDateString('es-ES', { 
-    month: 'long', 
-    year: 'numeric' 
-  });
+// Utilidades para compartir informes
+export const shareViaWhatsApp = (stats, config, selectedMonth, selectedYear, monthNames) => {
+  const monthName = monthNames ? monthNames[selectedMonth - 1] : selectedMonth;
+  
+  const text = `📊 *Informe de Servicio*
+🗓️ ${monthName} ${selectedYear}
 
-  let message = `📊 *INFORME DE ACTIVIDAD*\n`;
-  message += `${monthName.toUpperCase()}\n\n`;
-  message += `👤 Tipo: ${config.label}\n`;
-  message += `⏰ Horas: ${stats.totalHoursDecimal}\n`;
-  
-  if (stats.goal > 0) {
-    message += `🎯 Meta: ${stats.goal} hrs (${stats.progress}%)\n`;
-  }
-  
-  message += `📖 Cursos bíblicos: ${stats.studies}\n`;
-  
-  if (parseFloat(stats.totalApprovedHours) > 0) {
-    message += `✅ Horas aprobadas: ${stats.totalApprovedHours}\n`;
-  }
-  
-  message += `📅 Días de actividad: ${stats.activities}\n`;
-  message += `\n_Generado con Registro de Actividad_`;
+⏱️ *Horas:* ${stats.totalHours.toFixed(1)}${config.hours ? ` / ${config.hours}` : ''}
+📚 *Publicaciones:* ${stats.totalPlacements}${config.placements ? ` / ${config.placements}` : ''}
+🎥 *Videos:* ${stats.totalVideos}${config.videos ? ` / ${config.videos}` : ''}
+👥 *Revisitas:* ${stats.totalReturnVisits}${config.returnVisits ? ` / ${config.returnVisits}` : ''}
+🎓 *Estudios:* ${stats.totalStudies}${config.studies ? ` / ${config.studies}` : ''}
 
-  const encodedMessage = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+📅 Días activos: ${stats.daysActive}
+
+_Generado con Registro de Actividad_`;
+
+  const encodedText = encodeURIComponent(text);
+  const whatsappUrl = `https://wa.me/?text=${encodedText}`;
   
   window.open(whatsappUrl, '_blank');
 };
 
-export const copyToClipboard = (stats, config, selectedMonth, selectedYear) => {
-  const monthName = new Date(selectedYear, selectedMonth).toLocaleDateString('es-ES', { 
-    month: 'long', 
-    year: 'numeric' 
-  });
+export const copyToClipboard = (stats, config, selectedMonth, selectedYear, monthNames) => {
+  const monthName = monthNames ? monthNames[selectedMonth - 1] : selectedMonth;
+  
+  const text = `📊 Informe de Servicio
+🗓️ ${monthName} ${selectedYear}
 
-  let text = `INFORME DE ACTIVIDAD - ${monthName.toUpperCase()}\n\n`;
-  text += `Tipo: ${config.label}\n`;
-  text += `Horas: ${stats.totalHoursDecimal}\n`;
-  
-  if (stats.goal > 0) {
-    text += `Meta: ${stats.goal} hrs (${stats.progress}%)\n`;
-  }
-  
-  text += `Cursos bíblicos: ${stats.studies}\n`;
-  
-  if (parseFloat(stats.totalApprovedHours) > 0) {
-    text += `Horas aprobadas: ${stats.totalApprovedHours}\n`;
-  }
-  
-  text += `Días de actividad: ${stats.activities}`;
+⏱️ Horas: ${stats.totalHours.toFixed(1)}${config.hours ? ` / ${config.hours}` : ''}
+📚 Publicaciones: ${stats.totalPlacements}${config.placements ? ` / ${config.placements}` : ''}
+🎥 Videos: ${stats.totalVideos}${config.videos ? ` / ${config.videos}` : ''}
+👥 Revisitas: ${stats.totalReturnVisits}${config.returnVisits ? ` / ${config.returnVisits}` : ''}
+🎓 Estudios: ${stats.totalStudies}${config.studies ? ` / ${config.studies}` : ''}
+
+📅 Días activos: ${stats.daysActive}
+
+Generado con Registro de Actividad`;
 
   navigator.clipboard.writeText(text).then(() => {
     alert('✓ Informe copiado al portapapeles');
