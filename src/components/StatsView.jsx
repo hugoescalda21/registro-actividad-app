@@ -2,6 +2,7 @@ import React from 'react';
 import { MonthlyChart } from './MonthlyChart';
 import { activityTypes } from '../utils/constants';
 import { exportMonthlyReport, downloadReport } from '../utils/exportUtils';
+import { shareViaWhatsApp, copyToClipboard } from '../utils/shareUtils';
 
 export const StatsView = ({ stats, config, activities, publisherType, selectedMonth, selectedYear }) => {
   const handleExport = () => {
@@ -25,12 +26,26 @@ export const StatsView = ({ stats, config, activities, publisherType, selectedMo
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               🎯 Meta del Mes
             </h2>
-            <button
-              onClick={handleExport}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              📄 Exportar Informe
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => shareViaWhatsApp(stats, config, selectedMonth, selectedYear)}
+                className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center gap-1"
+              >
+                💬 WhatsApp
+              </button>
+              <button
+                onClick={() => copyToClipboard(stats, config, selectedMonth, selectedYear)}
+                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium flex items-center gap-1"
+              >
+                📋 Copiar
+              </button>
+              <button
+                onClick={handleExport}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                📄 Exportar
+              </button>
+            </div>
           </div>
           
           <div className="mb-4">

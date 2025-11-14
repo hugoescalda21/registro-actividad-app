@@ -1,13 +1,30 @@
 import React from 'react';
 
-export const Header = ({ publisherType, currentView, onViewChange, onSettingsClick, publisherTypes }) => {
+export const Header = ({ publisherType, currentView, onViewChange, onSettingsClick, publisherTypes, stats }) => {
   const config = publisherTypes[publisherType];
+  const showProgress = stats && stats.goal > 0;
 
   return (
     <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Registro de Actividad</h1>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">Registro de Actividad</h1>
+            {showProgress && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2 text-sm opacity-90">
+                  <span>{stats.totalHoursDecimal} / {stats.goal} hrs</span>
+                  <span className="text-xs">({stats.progress}%)</span>
+                </div>
+                <div className="w-48 bg-white bg-opacity-20 rounded-full h-2 mt-1">
+                  <div
+                    className="bg-white h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, stats.progress)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
           <button
             onClick={onSettingsClick}
             className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors"
