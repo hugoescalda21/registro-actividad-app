@@ -4,12 +4,12 @@ import Stopwatch from './Stopwatch';
 
 const RegisterView = ({ 
   onSave, 
+  onUpdate,
   config, 
   activities, 
   triggerFormOpen, 
   triggerStopwatchOpen,
-  editingActivity,
-  onUpdate 
+  editingActivity
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [showStopwatch, setShowStopwatch] = useState(false);
@@ -40,7 +40,7 @@ const RegisterView = ({
     }
   }, [editingActivity]);
 
-  // Escuchar trigger para abrir formulario
+  // Escuchar trigger para abrir formulario nuevo
   useEffect(() => {
     if (triggerFormOpen > 0 && !editingActivity) {
       setFormData({
@@ -95,6 +95,10 @@ const RegisterView = ({
     }
 
     // Resetear formulario
+    resetForm();
+  };
+
+  const resetForm = () => {
     setFormData({
       date: new Date().toISOString().split('T')[0],
       hours: '',
@@ -108,16 +112,7 @@ const RegisterView = ({
   };
 
   const handleCancel = () => {
-    setShowForm(false);
-    setIsEditing(false);
-    setFormData({
-      date: new Date().toISOString().split('T')[0],
-      hours: '',
-      studies: '',
-      approvedHours: '',
-      approvedDetail: '',
-      notes: ''
-    });
+    resetForm();
   };
 
   const handleStopwatchSave = (hours) => {
@@ -128,41 +123,47 @@ const RegisterView = ({
 
   // Obtener última actividad
   const lastActivity = activities.length > 0 
-    ? activities.sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    ? [...activities].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
     : null;
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Quick Stats Card */}
+      {/* Quick Stats Card - Solo cuando no hay formulario abierto */}
       {lastActivity && !showForm && !showStopwatch && (
-        <div className="card-gradient p-6 border-l-4 border-blue-500">
+        <div className="card-gradient p-5 border-l-4 border-blue-500 hover-lift md:p-6">
           <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             Última actividad registrada
           </h3>
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-lg font-bold text-gray-800">
+            <div className="flex-1">
+              <p className="text-base font-bold text-gray-800 mb-2 md:text-lg">
                 {new Date(lastActivity.date).toLocaleDateString('es-ES', {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long'
                 })}
               </p>
-              <div className="flex gap-3 mt-2 text-sm text-gray-600">
+              <div className="flex flex-wrap gap-2 text-sm text-gray-600">
                 {config.canLogHours && lastActivity.hours > 0 && (
-                  <span>⏱️ {lastActivity.hours}h</span>
+                  <span className="badge badge-primary">
+                    ⏱️ {lastActivity.hours}h
+                  </span>
                 )}
                 {lastActivity.studies > 0 && (
-                  <span>🎓 {lastActivity.studies} estudio{lastActivity.studies !== 1 ? 's' : ''}</span>
+                  <span className="badge badge-warning">
+                    🎓 {lastActivity.studies} estudio{lastActivity.studies !== 1 ? 's' : ''}
+                  </span>
                 )}
                 {config.canLogApproved && lastActivity.approvedHours > 0 && (
-                  <span>✅ {lastActivity.approvedHours}h aprobadas</span>
+                  <span className="badge badge-success">
+                    ✅ {lastActivity.approvedHours}h aprobadas
+                  </span>
                 )}
               </div>
             </div>
-            {config.canLogHours && (
-              <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-xl font-bold text-lg">
+            {config.canLogHours && lastActivity.hours > 0 && (
+              <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-xl font-bold text-lg shadow-sm ml-4">
                 {lastActivity.hours}h
               </div>
             )}
@@ -170,15 +171,17 @@ const RegisterView = ({
         </div>
       )}
 
-      {/* Mensaje cuando no hay botones */}
+      {/* Mensaje cuando no hay actividades */}
       {!showForm && !showStopwatch && !lastActivity && (
         <div className="card-gradient p-12 text-center">
           <div className="text-6xl mb-4">👇</div>
           <h3 className="text-2xl font-bold text-gray-700 mb-2">
             Comienza a registrar
           </h3>
-          <p className="text-gray-500">
-            Usa el botón flotante <span className="text-blue-600 font-semibold">+</span> para agregar una nueva actividad
+          <p className="text-gray-500 text-base">
+            <span className="hidden md:inline">Usa el botón flotante <span className="text-blue-600 font-semibold">+</span> de la esquina inferior izquierda</span>
+            <span className="md:hidden">Usa el botón <span className="text-blue-600 font-semibold">"Nueva"</span> de abajo</span>
+            <br />para agregar una nueva actividad
           </p>
         </div>
       )}
@@ -195,15 +198,16 @@ const RegisterView = ({
 
       {/* Formulario */}
       {showForm && (
-        <div className="card-gradient p-6 animate-scaleIn">
+        <div className="card-gradient p-5 animate-scaleIn md:p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <FileText className="w-6 h-6 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2 md:text-2xl">
+              <FileText className="w-5 h-5 text-blue-600 md:w-6 md:h-6" />
               {isEditing ? 'Editar Actividad' : 'Nueva Actividad'}
             </h2>
             <button
               onClick={handleCancel}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-target"
+              aria-label="Cancelar"
             >
               <X className="w-5 h-5 text-gray-600" />
             </button>
@@ -222,6 +226,7 @@ const RegisterView = ({
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors bg-white"
                 required
+                style={{ fontSize: '16px' }}
               />
             </div>
 
@@ -235,12 +240,14 @@ const RegisterView = ({
                 <div className="relative">
                   <input
                     type="number"
+                    inputMode="decimal"
                     step="0.1"
                     value={formData.hours}
                     onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors bg-white"
                     placeholder="0.0"
                     required
+                    style={{ fontSize: '16px' }}
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
                     horas
@@ -257,11 +264,13 @@ const RegisterView = ({
               </label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={formData.studies}
                 onChange={(e) => setFormData({ ...formData, studies: e.target.value })}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 focus:ring-0 transition-colors bg-white"
                 placeholder="0"
                 min="0"
+                style={{ fontSize: '16px' }}
               />
             </div>
 
@@ -275,17 +284,19 @@ const RegisterView = ({
                   </label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     step="0.1"
                     value={formData.approvedHours}
                     onChange={(e) => setFormData({ ...formData, approvedHours: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-green-300 rounded-xl focus:border-green-500 focus:ring-0 transition-colors bg-white font-semibold"
                     placeholder="0.0"
                     min="0"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 {formData.approvedHours && parseFloat(formData.approvedHours) > 0 && (
-                  <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                  <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 animate-fadeIn">
                     <label className="block text-sm font-bold text-green-800 mb-2 flex items-center gap-2">
                       <FileText className="w-5 h-5 text-green-600" />
                       Detalle de Horas Aprobadas *
@@ -297,6 +308,7 @@ const RegisterView = ({
                       rows="3"
                       placeholder="Ej: Construcción de Salón del Reino, Ayuda en Betel, etc."
                       required={formData.approvedHours && parseFloat(formData.approvedHours) > 0}
+                      style={{ fontSize: '16px' }}
                     />
                     <p className="text-xs text-green-700 mt-2">
                       💡 Especifica la actividad que generó las horas aprobadas
@@ -318,7 +330,23 @@ const RegisterView = ({
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:ring-0 transition-colors bg-white resize-none"
                 rows="3"
                 placeholder="Agrega comentarios sobre tu actividad..."
+                style={{ fontSize: '16px' }}
               />
+            </div>
+
+            {/* Información del tipo de publicador */}
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+              <p className="text-sm text-blue-800 font-medium">
+                <span className="font-bold">ℹ️ Campos para {config.label}:</span>
+                <br />
+                {config.canLogHours && '• Horas de predicación'}
+                {config.canLogHours && <br />}
+                • Estudios bíblicos
+                {config.canLogApproved && <br />}
+                {config.canLogApproved && '• Horas aprobadas con detalle'}
+                <br />
+                • Notas
+              </p>
             </div>
 
             {/* Botones */}
@@ -326,16 +354,16 @@ const RegisterView = ({
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors active:scale-95 min-h-[52px]"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="flex-1 btn-primary flex items-center justify-center gap-2"
+                className="flex-1 btn-primary flex items-center justify-center gap-2 active:scale-95 min-h-[52px]"
               >
                 <Save className="w-5 h-5" />
-                {isEditing ? 'Actualizar' : 'Guardar'} Actividad
+                <span>{isEditing ? 'Actualizar' : 'Guardar'}</span>
               </button>
             </div>
           </form>

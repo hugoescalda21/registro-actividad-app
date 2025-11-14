@@ -214,3 +214,87 @@ input:focus, textarea:focus, select:focus {
 .shadow-strong {
   box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.15), 0 20px 50px -8px rgba(0, 0, 0, 0.12);
 }
+
+/* Mejoras para móviles */
+@media (max-width: 768px) {
+  /* Hacer que los elementos táctiles sean más grandes */
+  button, input, select, textarea {
+    min-height: 48px;
+    font-size: 16px; /* Prevenir zoom en iOS */
+  }
+
+  /* Espaciado más generoso en móviles */
+  .card, .card-gradient {
+    margin-bottom: 1rem;
+  }
+
+  /* Inputs más grandes en móviles */
+  input[type="date"],
+  input[type="number"],
+  input[type="text"],
+  textarea,
+  select {
+    padding: 0.875rem 1rem !important;
+    font-size: 16px !important;
+  }
+
+  /* Botones más táctiles */
+  .btn-primary,
+  .btn-secondary,
+  .btn-success,
+  .btn-danger {
+    min-height: 52px;
+    font-size: 1.05rem;
+  }
+
+  /* FAB más visible */
+  .fab-button {
+    width: 68px;
+    height: 68px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Widget de cronómetro más visible */
+  .stopwatch-widget {
+    right: 1rem;
+    bottom: 5rem;
+  }
+}
+
+/* Animación para FAB pulsante */
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.fab-pulse {
+  animation: pulse-scale 2s ease-in-out infinite;
+}
+
+/* Mejora de áreas táctiles */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Scroll suave */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevenir zoom accidental en iOS */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+textarea,
+select {
+  font-size: 16px !important;
+}

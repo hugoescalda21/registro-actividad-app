@@ -6,6 +6,7 @@ import HistoryView from './components/HistoryView';
 import SettingsModal from './components/SettingsModal';
 import StopwatchWidget from './components/StopwatchWidget';
 import FloatingActionButton from './components/FloatingActionButton';
+import BottomNav from './components/BottomNav';
 
 function App() {
   const [currentView, setCurrentView] = useState('register');
@@ -156,23 +157,23 @@ function App() {
 
   const handleSave = (activity) => {
     setActivities([...activities, activity]);
+    setEditingActivity(null);
   };
 
- const handleEdit = (activity) => {
-  setEditingActivity(activity);
-  setCurrentView('register');
-  setTimeout(() => {
-    setTriggerFormOpen(prev => prev + 1);
-  }, 100);
-};
+  const handleUpdate = (updatedActivity) => {
+    setActivities(activities.map(a => 
+      a.id === updatedActivity.id ? updatedActivity : a
+    ));
+    setEditingActivity(null);
+  };
 
-// Crear función handleUpdate
-const handleUpdate = (updatedActivity) => {
-  setActivities(activities.map(a => 
-    a.id === updatedActivity.id ? updatedActivity : a
-  ));
-  setEditingActivity(null);
-};
+  const handleEdit = (activity) => {
+    setEditingActivity(activity);
+    setCurrentView('register');
+    setTimeout(() => {
+      setTriggerFormOpen(prev => prev + 1);
+    }, 100);
+  };
 
   const handleDelete = (id) => {
     setActivities(activities.filter(a => a.id !== id));
@@ -188,17 +189,19 @@ const handleUpdate = (updatedActivity) => {
   };
 
   const handleOpenManualForm = () => {
+    setEditingActivity(null);
     setCurrentView('register');
     setTriggerFormOpen(prev => prev + 1);
   };
 
   const handleOpenStopwatch = () => {
+    setEditingActivity(null);
     setCurrentView('register');
     setTriggerStopwatchOpen(prev => prev + 1);
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 md:pb-6">
       <Header
         publisherType={publisherType}
         currentView={currentView}
@@ -211,16 +214,16 @@ const handleUpdate = (updatedActivity) => {
       <main className="max-w-4xl mx-auto px-4 py-6 pb-24">
         <div className="animate-fadeIn">
           {currentView === 'register' && (
-  <RegisterView
-    onSave={handleSave}
-    onUpdate={handleUpdate}
-    config={publisherTypes[publisherType]}
-    activities={activities}
-    triggerFormOpen={triggerFormOpen}
-    triggerStopwatchOpen={triggerStopwatchOpen}
-    editingActivity={editingActivity}
-  />
-)}
+            <RegisterView
+              onSave={handleSave}
+              onUpdate={handleUpdate}
+              config={publisherTypes[publisherType]}
+              activities={activities}
+              triggerFormOpen={triggerFormOpen}
+              triggerStopwatchOpen={triggerStopwatchOpen}
+              editingActivity={editingActivity}
+            />
+          )}
 
           {currentView === 'stats' && (
             <StatsView
@@ -241,12 +244,26 @@ const handleUpdate = (updatedActivity) => {
         </div>
       </main>
 
-      {/* Botón flotante de acción */}
-      <FloatingActionButton
-        onManualClick={handleOpenManualForm}
-        onStopwatchClick={handleOpenStopwatch}
-        canUseStopwatch={publisherTypes[publisherType].canLogHours}
-      />
+      {/* Bottom Navigation - Solo en móviles */}
+      <div className="md:hidden">
+        <BottomNav
+  currentView={currentView}
+  onViewChange={setCurrentView}
+  onNewActivity={handleOpenManualForm}
+  onStopwatch={handleOpenStopwatch}
+  showStopwatch={showStopwatchWidget}
+  canUseStopwatch={publisherTypes[publisherType].canLogHours}
+/>
+      </div>
+
+      {/* FAB - Solo en desktop */}
+      <div className="hidden md:block">
+        <FloatingActionButton
+          onManualClick={handleOpenManualForm}
+          onStopwatchClick={handleOpenStopwatch}
+          canUseStopwatch={publisherTypes[publisherType].canLogHours}
+        />
+      </div>
 
       {/* Widget flotante del cronómetro */}
       {showStopwatchWidget && (

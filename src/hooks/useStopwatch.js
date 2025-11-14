@@ -12,27 +12,40 @@ export const useStopwatch = () => {
   useEffect(() => {
     const savedState = localStorage.getItem('stopwatchState');
     if (savedState) {
-      const { savedTime, savedIsRunning, savedStartTime } = JSON.parse(savedState);
-      if (savedIsRunning && savedStartTime) {
-        const elapsed = Math.floor((Date.now() - savedStartTime) / 1000);
-        setTime(savedTime + elapsed);
-        setIsRunning(true);
-        startTimeRef.current = Date.now() - ((savedTime + elapsed) * 1000);
-      } else {
-        setTime(savedTime);
+      try {
+        const { savedTime, savedIsRunning, savedStartTime } = JSON.parse(savedState);
+        if (savedIsRunning && savedStartTime) {
+          const elapsed = Math.floor((Date.now() - savedStartTime) / 1000);
+          setTime(savedTime + elapsed);
+          setIsRunning(true);
+          setIsPaused(false);
+          startTimeRef.current = Date.now() - ((savedTime + elapsed) * 1000);
+        } else if (savedIsRunning) {
+          // Está pausado
+          setTime(savedTime);
+          setIsRunning(true);
+          setIsPaused(true);
+          pausedTimeRef.current = savedTime;
+        } else {
+          setTime(savedTime);
+        }
+      } catch (error) {
+        console.error('Error al cargar cronómetro:', error);
+        localStorage.removeItem('stopwatchState');
       }
     }
   }, []);
 
   // Guardar estado
   useEffect(() => {
-    if (isRunning && !isPaused) {
-      localStorage.setItem('stopwatchState', JSON.stringify({
+    if (isRunning) {
+      const stateToSave = {
         savedTime: time,
         savedIsRunning: isRunning,
-        savedStartTime: startTimeRef.current
-      }));
-    } else if (!isRunning) {
+        savedStartTime: isPaused ? null : startTimeRef.current
+      };
+      localStorage.setItem('stopwatchState', JSON.stringify(stateToSave));
+    } else if (time === 0) {
       localStorage.removeItem('stopwatchState');
     }
   }, [time, isRunning, isPaused]);
@@ -43,7 +56,7 @@ export const useStopwatch = () => {
       intervalRef.current = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
         setTime(elapsed);
-      }, 100);
+      }, 100); // Actualizar cada 100ms para mayor precisión
 
       return () => {
         if (intervalRef.current) {
@@ -94,6 +107,7 @@ export const useStopwatch = () => {
     }
     setIsRunning(false);
     setIsPaused(false);
+    localStorage.removeItem('stopwatchState');
   }, []);
 
   const reset = useCallback(() => {
