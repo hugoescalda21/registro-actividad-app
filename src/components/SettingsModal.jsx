@@ -10,7 +10,8 @@ export const SettingsModal = ({
   activities,
   setActivities,
   isDark,
-  toggleTheme
+  toggleTheme,
+  requestNotificationPermission
 }) => {
   if (!show) return null;
 
@@ -97,6 +98,20 @@ export const SettingsModal = ({
             </button>
           </div>
 
+          {/* Notificaciones */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Notificaciones</label>
+            <button
+              onClick={requestNotificationPermission}
+              className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2"
+            >
+              🔔 Activar Recordatorios
+            </button>
+            <p className="text-xs text-gray-500 mt-2">
+              Recibe recordatorios diarios para registrar tu actividad
+            </p>
+          </div>
+
           {/* Backup y Restauración */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Respaldo de Datos</label>
@@ -127,6 +142,9 @@ export const SettingsModal = ({
           <div className="pt-4 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">
               Versión 2.0 - PWA Profesional
+            </p>
+            <p className="text-xs text-gray-400 text-center mt-1">
+              Con historial, gráficos y notificaciones
             </p>
           </div>
         </div>

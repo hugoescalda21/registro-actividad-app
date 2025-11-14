@@ -4,18 +4,24 @@ import { StatsView } from './components/StatsView';
 import { RegisterView } from './components/RegisterView';
 import { SettingsModal } from './components/SettingsModal';
 import { ActivityModal } from './components/ActivityModal';
+import { MonthSelector } from './components/MonthSelector';
 import { useActivities } from './hooks/useActivities';
 import { useStats } from './hooks/useStats';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
+import { useNotifications } from './hooks/useNotifications';
 import { publisherTypes } from './utils/constants';
 
 function App() {
+  const now = new Date();
   const [currentView, setCurrentView] = useState('register');
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [publisherType, setPublisherType] = useLocalStorage('publisherType', 'publicador');
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const { isDark, toggleTheme } = useTheme();
+  const { requestPermission, scheduleNotification } = useNotifications();
   
   const {
     activities,
@@ -28,8 +34,13 @@ function App() {
     setEditingId
   } = useActivities();
 
-  const stats = useStats(activities, publisherType);
+  const stats = useStats(activities, publisherType, selectedMonth, selectedYear);
   const config = publisherTypes[publisherType];
+
+  const handleMonthChange = (month, year) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
+  };
 
   const handleNewActivity = () => {
     setEditingId(null);
@@ -46,6 +57,8 @@ function App() {
       updateActivity(editingId, formData);
     } else {
       addActivity(formData);
+      // Programar notificación para mañana
+      scheduleNotification();
     }
     setShowActivityModal(false);
     setEditingId(null);
@@ -71,12 +84,20 @@ function App() {
       />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        <MonthSelector
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          onMonthChange={handleMonthChange}
+        />
+
         {currentView === 'stats' ? (
           <StatsView
             stats={stats}
             config={config}
             activities={activities}
             publisherType={publisherType}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
           />
         ) : (
           <RegisterView
@@ -86,6 +107,8 @@ function App() {
             onNewActivity={handleNewActivity}
             onEdit={handleEditActivity}
             onDelete={deleteActivity}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
           />
         )}
       </div>
@@ -98,7 +121,7 @@ function App() {
         config={config}
       />
 
-      <SettingsModal
+     <SettingsModal
         show={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         publisherType={publisherType}
@@ -108,6 +131,7 @@ function App() {
         setActivities={setActivities}
         isDark={isDark}
         toggleTheme={toggleTheme}
+        requestNotificationPermission={requestPermission}
       />
     </div>
   );

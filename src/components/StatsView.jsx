@@ -1,13 +1,21 @@
 import React from 'react';
+import { MonthlyChart } from './MonthlyChart';
+import { activityTypes } from '../utils/constants';
 import { exportMonthlyReport, downloadReport } from '../utils/exportUtils';
 
-export const StatsView = ({ stats, config, activities, publisherType }) => {
+export const StatsView = ({ stats, config, activities, publisherType, selectedMonth, selectedYear }) => {
   const handleExport = () => {
+    const monthName = new Date(selectedYear, selectedMonth).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     const report = exportMonthlyReport(stats, config.label, activities);
-    const now = new Date();
-    const filename = `informe_${now.getFullYear()}_${now.getMonth() + 1}.txt`;
+    const filename = `informe_${selectedYear}_${selectedMonth + 1}.txt`;
     downloadReport(report, filename);
   };
+
+  // Filtrar actividades del mes seleccionado
+  const monthActivities = activities.filter(a => {
+    const date = new Date(a.date);
+    return date.getMonth() === selectedMonth && date.getFullYear() === selectedYear;
+  });
 
   return (
     <div>
@@ -67,7 +75,7 @@ export const StatsView = ({ stats, config, activities, publisherType }) => {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
         <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
           📊 Resumen del Mes
         </h2>
@@ -101,6 +109,9 @@ export const StatsView = ({ stats, config, activities, publisherType }) => {
           </div>
         </div>
       </div>
+
+      {/* Gráficos */}
+      <MonthlyChart activities={monthActivities} activityTypes={activityTypes} />
     </div>
   );
 };

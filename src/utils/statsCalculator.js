@@ -1,13 +1,13 @@
 import { publisherTypes } from './constants';
 
-export const calculateStats = (activities, publisherType) => {
+export const calculateStats = (activities, publisherType, month = null, year = null) => {
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const targetMonth = month !== null ? month : now.getMonth();
+  const targetYear = year !== null ? year : now.getFullYear();
 
   const monthActivities = activities.filter(a => {
     const date = new Date(a.date);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+    return date.getMonth() === targetMonth && date.getFullYear() === targetYear;
   });
 
   const totalMinutes = monthActivities.reduce((sum, a) => sum + (a.totalMinutes || 0), 0);
