@@ -8,6 +8,7 @@ import StopwatchWidget from './components/StopwatchWidget';
 import FloatingActionButton from './components/FloatingActionButton';
 import BottomNav from './components/BottomNav';
 import { useToast } from './contexts/ToastContext';
+import { getMonthYear } from './utils/dateUtils';
 
 function App() {
   const { showToast } = useToast();
@@ -89,6 +90,7 @@ function App() {
         setActivities(JSON.parse(savedActivities));
       } catch (error) {
         console.error('Error al cargar actividades:', error);
+        showToast('Error al cargar actividades guardadas', 'error');
       }
     }
 
@@ -110,20 +112,17 @@ function App() {
 
   // Escuchar cambios en el localStorage para el cronómetro
   useEffect(() => {
-  const handleStorageChange = () => {
-    const stopwatchState = localStorage.getItem('stopwatchState');
-    console.log('🔍 Stopwatch State:', stopwatchState); // LOG DE DEBUG
-    setShowStopwatchWidget(!!stopwatchState);
-  };
+    const handleStorageChange = () => {
+      const stopwatchState = localStorage.getItem('stopwatchState');
+      setShowStopwatchWidget(!!stopwatchState);
+    };
 
     window.addEventListener('storage', handleStorageChange);
     
-    // Verificar cada segundo si hay cambios
-     const interval = setInterval(() => {
-    const stopwatchState = localStorage.getItem('stopwatchState');
-    console.log('⏱️ Checking stopwatch:', !!stopwatchState); // LOG DE DEBUG
-    setShowStopwatchWidget(!!stopwatchState);
-  }, 1000);
+    const interval = setInterval(() => {
+      const stopwatchState = localStorage.getItem('stopwatchState');
+      setShowStopwatchWidget(!!stopwatchState);
+    }, 1000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -141,14 +140,13 @@ function App() {
     localStorage.setItem('publisherType', publisherType);
   }, [publisherType]);
 
-  // Calcular estadísticas del mes actual
+  // Calcular estadísticas del mes actual usando dateUtils
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
   
   const currentMonthActivities = activities.filter(activity => {
-    const activityDate = new Date(activity.date);
-    return activityDate.getMonth() + 1 === currentMonth && 
-           activityDate.getFullYear() === currentYear;
+    const { month, year } = getMonthYear(activity.date);
+    return month === currentMonth && year === currentYear;
   });
 
   const stats = {
@@ -255,13 +253,13 @@ function App() {
       {/* Bottom Navigation - Solo en móviles */}
       <div className="md:hidden">
         <BottomNav
-  currentView={currentView}
-  onViewChange={setCurrentView}
-  onNewActivity={handleOpenManualForm}
-  onStopwatch={handleOpenStopwatch}
-  showStopwatch={showStopwatchWidget}
-  canUseStopwatch={publisherTypes[publisherType].canLogHours}
-/>
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onNewActivity={handleOpenManualForm}
+          onStopwatch={handleOpenStopwatch}
+          showStopwatch={showStopwatchWidget}
+          canUseStopwatch={publisherTypes[publisherType].canLogHours}
+        />
       </div>
 
       {/* FAB - Solo en desktop */}
@@ -275,7 +273,7 @@ function App() {
 
       {/* Widget flotante del cronómetro */}
       {showStopwatchWidget && (
-  <StopwatchWidget onOpen={handleOpenStopwatch} />
+        <StopwatchWidget onOpen={handleOpenStopwatch} />
       )}
 
       {showSettingsModal && (

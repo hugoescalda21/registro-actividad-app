@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, BookOpen, Award, FileText, Save, X, CheckCircle } from 'lucide-react';
 import Stopwatch from './Stopwatch';
 import LoadingSpinner from './LoadingSpinner';
+import { formatDateWithWeekday } from '../utils/dateUtils';
 
 const RegisterView = ({ 
   onSave, 
@@ -79,7 +80,7 @@ const RegisterView = ({
 
     const activity = {
       id: isEditing ? editingActivity.id : Date.now(),
-      date: formData.date,
+      date: formData.date, // Se guarda como string YYYY-MM-DD (sin conversión a Date)
       hours: config.canLogHours ? parseFloat(formData.hours) || 0 : 0,
       placements: 0,
       videos: 0,
@@ -124,7 +125,7 @@ const RegisterView = ({
   };
 
   const lastActivity = activities.length > 0 
-    ? [...activities].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    ? [...activities].sort((a, b) => new Date(a.date) - new Date(b.date) > 0 ? -1 : 1)[0]
     : null;
 
   return (
@@ -138,11 +139,7 @@ const RegisterView = ({
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-base font-bold text-gray-800 mb-2 md:text-lg">
-                {new Date(lastActivity.date).toLocaleDateString('es-ES', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long'
-                })}
+                {formatDateWithWeekday(lastActivity.date)}
               </p>
               <div className="flex flex-wrap gap-2 text-sm text-gray-600">
                 {config.canLogHours && lastActivity.hours > 0 && (
