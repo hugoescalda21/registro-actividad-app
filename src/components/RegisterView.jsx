@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, BookOpen, Award, FileText, Save, X, CheckCircle } from 'lucide-react';
 import Stopwatch from './Stopwatch';
+import LoadingSpinner from './LoadingSpinner';
 
 const RegisterView = ({ 
   onSave, 
@@ -14,6 +15,7 @@ const RegisterView = ({
   const [showForm, setShowForm] = useState(false);
   const [showStopwatch, setShowStopwatch] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     hours: '',
@@ -23,7 +25,6 @@ const RegisterView = ({
     notes: ''
   });
 
-  // Cargar datos para edición
   useEffect(() => {
     if (editingActivity) {
       setFormData({
@@ -40,7 +41,6 @@ const RegisterView = ({
     }
   }, [editingActivity]);
 
-  // Escuchar trigger para abrir formulario nuevo
   useEffect(() => {
     if (triggerFormOpen > 0 && !editingActivity) {
       setFormData({
@@ -57,7 +57,6 @@ const RegisterView = ({
     }
   }, [triggerFormOpen, editingActivity]);
 
-  // Escuchar trigger para abrir cronómetro
   useEffect(() => {
     if (triggerStopwatchOpen > 0) {
       setShowStopwatch(true);
@@ -66,14 +65,17 @@ const RegisterView = ({
     }
   }, [triggerStopwatchOpen]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validación según tipo de publicador
     if (config.canLogHours && (!formData.hours || parseFloat(formData.hours) === 0)) {
       alert('Debes ingresar las horas de predicación');
       return;
     }
+
+    setIsSubmitting(true);
+    
+    await new Promise(resolve => setTimeout(resolve, 400));
 
     const activity = {
       id: isEditing ? editingActivity.id : Date.now(),
@@ -94,7 +96,7 @@ const RegisterView = ({
       onSave(activity);
     }
 
-    // Resetear formulario
+    setIsSubmitting(false);
     resetForm();
   };
 
@@ -121,14 +123,12 @@ const RegisterView = ({
     setShowForm(true);
   };
 
-  // Obtener última actividad
   const lastActivity = activities.length > 0 
     ? [...activities].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
     : null;
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Quick Stats Card - Solo cuando no hay formulario abierto */}
       {lastActivity && !showForm && !showStopwatch && (
         <div className="card-gradient p-5 border-l-4 border-blue-500 hover-lift md:p-6">
           <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
@@ -171,7 +171,6 @@ const RegisterView = ({
         </div>
       )}
 
-      {/* Mensaje cuando no hay actividades */}
       {!showForm && !showStopwatch && !lastActivity && (
         <div className="card-gradient p-12 text-center">
           <div className="text-6xl mb-4">👇</div>
@@ -179,14 +178,13 @@ const RegisterView = ({
             Comienza a registrar
           </h3>
           <p className="text-gray-500 text-base">
-            <span className="hidden md:inline">Usa el botón flotante <span className="text-blue-600 font-semibold">+</span> de la esquina inferior izquierda</span>
-            <span className="md:hidden">Usa el botón <span className="text-blue-600 font-semibold">"Nueva"</span> de abajo</span>
+            <span className="hidden md:inline">Usa el botón flotante + de la esquina inferior izquierda</span>
+            <span className="md:hidden">Usa el botón Nueva de abajo</span>
             <br />para agregar una nueva actividad
           </p>
         </div>
       )}
 
-      {/* Stopwatch */}
       {showStopwatch && config.canLogHours && (
         <div className="animate-scaleIn">
           <Stopwatch
@@ -196,7 +194,6 @@ const RegisterView = ({
         </div>
       )}
 
-      {/* Formulario */}
       {showForm && (
         <div className="card-gradient p-5 animate-scaleIn md:p-6">
           <div className="flex items-center justify-between mb-6">
@@ -206,7 +203,8 @@ const RegisterView = ({
             </h2>
             <button
               onClick={handleCancel}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-target"
+              disabled={isSubmitting}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-target disabled:opacity-50"
               aria-label="Cancelar"
             >
               <X className="w-5 h-5 text-gray-600" />
@@ -214,7 +212,6 @@ const RegisterView = ({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Fecha */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-600" />
@@ -226,11 +223,11 @@ const RegisterView = ({
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors bg-white"
                 required
+                disabled={isSubmitting}
                 style={{ fontSize: '16px' }}
               />
             </div>
 
-            {/* Horas - Solo para precursores */}
             {config.canLogHours && (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -247,6 +244,7 @@ const RegisterView = ({
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors bg-white"
                     placeholder="0.0"
                     required
+                    disabled={isSubmitting}
                     style={{ fontSize: '16px' }}
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
@@ -256,7 +254,6 @@ const RegisterView = ({
               </div>
             )}
 
-            {/* Estudios Bíblicos - Para todos */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <Award className="w-4 h-4 text-yellow-600" />
@@ -270,11 +267,11 @@ const RegisterView = ({
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-yellow-500 focus:ring-0 transition-colors bg-white"
                 placeholder="0"
                 min="0"
+                disabled={isSubmitting}
                 style={{ fontSize: '16px' }}
               />
             </div>
 
-            {/* Horas Aprobadas - Solo para Precursores Regulares y Especiales */}
             {config.canLogApproved && (
               <>
                 <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
@@ -291,6 +288,7 @@ const RegisterView = ({
                     className="w-full px-4 py-3 border-2 border-green-300 rounded-xl focus:border-green-500 focus:ring-0 transition-colors bg-white font-semibold"
                     placeholder="0.0"
                     min="0"
+                    disabled={isSubmitting}
                     style={{ fontSize: '16px' }}
                   />
                 </div>
@@ -308,6 +306,7 @@ const RegisterView = ({
                       rows="3"
                       placeholder="Ej: Construcción de Salón del Reino, Ayuda en Betel, etc."
                       required={formData.approvedHours && parseFloat(formData.approvedHours) > 0}
+                      disabled={isSubmitting}
                       style={{ fontSize: '16px' }}
                     />
                     <p className="text-xs text-green-700 mt-2">
@@ -318,7 +317,6 @@ const RegisterView = ({
               </>
             )}
 
-            {/* Notas - Para todos */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-gray-600" />
@@ -330,11 +328,11 @@ const RegisterView = ({
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:ring-0 transition-colors bg-white resize-none"
                 rows="3"
                 placeholder="Agrega comentarios sobre tu actividad..."
+                disabled={isSubmitting}
                 style={{ fontSize: '16px' }}
               />
             </div>
 
-            {/* Información del tipo de publicador */}
             <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
               <p className="text-sm text-blue-800 font-medium">
                 <span className="font-bold">ℹ️ Campos para {config.label}:</span>
@@ -349,21 +347,31 @@ const RegisterView = ({
               </p>
             </div>
 
-            {/* Botones */}
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors active:scale-95 min-h-[52px]"
+                disabled={isSubmitting}
+                className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors active:scale-95 min-h-[52px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="flex-1 btn-primary flex items-center justify-center gap-2 active:scale-95 min-h-[52px]"
+                disabled={isSubmitting}
+                className="flex-1 btn-primary flex items-center justify-center gap-2 active:scale-95 min-h-[52px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="w-5 h-5" />
-                <span>{isEditing ? 'Actualizar' : 'Guardar'}</span>
+                {isSubmitting ? (
+                  <>
+                    <LoadingSpinner size="sm" color="white" />
+                    <span>{isEditing ? 'Actualizando...' : 'Guardando...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    <span>{isEditing ? 'Actualizar' : 'Guardar'}</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

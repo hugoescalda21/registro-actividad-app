@@ -25,6 +25,11 @@ const Stopwatch = ({ onSave, onCancel }) => {
     
     const hours = time / 3600;
     onSave(hours);
+    // NO remover el estado aquí, solo cerrar el componente
+  };
+
+  const handleStop = () => {
+    stop(); // Esto sí remueve el estado
   };
 
   return (
@@ -136,7 +141,7 @@ const Stopwatch = ({ onSave, onCancel }) => {
                 </button>
               )}
               <button
-                onClick={stop}
+                onClick={handleStop}
                 className="btn-danger py-4 flex items-center justify-center gap-2 active:scale-95 md:py-5"
               >
                 <Square className="w-6 h-6" />

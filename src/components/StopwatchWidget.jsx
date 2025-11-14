@@ -10,7 +10,15 @@ const StopwatchWidget = ({ onOpen }) => {
   // Estados para drag
   const [position, setPosition] = useState(() => {
     const saved = localStorage.getItem('stopwatchWidgetPosition');
-    return saved ? JSON.parse(saved) : { x: window.innerWidth - 340, y: 100 };
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    // Posición inicial diferente según dispositivo
+    const isMobile = window.innerWidth < 768;
+    return { 
+      x: isMobile ? 10 : window.innerWidth - 340, 
+      y: isMobile ? 80 : 100 
+    };
   });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -42,9 +50,25 @@ const StopwatchWidget = ({ onOpen }) => {
     localStorage.setItem('stopwatchWidgetPosition', JSON.stringify(position));
   }, [position]);
 
+  // Ajustar posición al cambiar tamaño de ventana
+  useEffect(() => {
+    const handleResize = () => {
+      const maxX = window.innerWidth - (widgetRef.current?.offsetWidth || 320);
+      const maxY = window.innerHeight - (widgetRef.current?.offsetHeight || 200);
+      
+      setPosition(prev => ({
+        x: Math.max(0, Math.min(prev.x, maxX)),
+        y: Math.max(0, Math.min(prev.y, maxY))
+      }));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Handlers de drag
   const handleMouseDown = (e) => {
-    if (e.target.closest('button')) return; // No arrastrar si se clickea un botón
+    if (e.target.closest('button')) return;
     
     setIsDragging(true);
     setDragOffset({
@@ -70,7 +94,6 @@ const StopwatchWidget = ({ onOpen }) => {
         const newX = e.clientX - dragOffset.x;
         const newY = e.clientY - dragOffset.y;
         
-        // Límites de la pantalla
         const maxX = window.innerWidth - (widgetRef.current?.offsetWidth || 320);
         const maxY = window.innerHeight - (widgetRef.current?.offsetHeight || 200);
         
@@ -83,6 +106,7 @@ const StopwatchWidget = ({ onOpen }) => {
 
     const handleTouchMove = (e) => {
       if (isDragging) {
+        e.preventDefault();
         const touch = e.touches[0];
         const newX = touch.clientX - dragOffset.x;
         const newY = touch.clientY - dragOffset.y;
@@ -104,7 +128,7 @@ const StopwatchWidget = ({ onOpen }) => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleTouchMove);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
       document.addEventListener('touchend', handleMouseUp);
     }
 
@@ -122,16 +146,15 @@ const StopwatchWidget = ({ onOpen }) => {
     const secs = seconds % 60;
     return {
       display: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`,
-      hours: hours,
-      minutes: minutes,
-      seconds: secs
+      hours: hours.toString().padStart(2, '0'),
+      minutes: minutes.toString().padStart(2, '0'),
+      seconds: secs.toString().padStart(2, '0')
     };
   };
 
   const handlePause = () => {
     const stopwatchState = localStorage.getItem('stopwatchState');
     if (stopwatchState) {
-      const state = JSON.parse(stopwatchState);
       localStorage.setItem('stopwatchState', JSON.stringify({
         savedTime: time,
         savedIsRunning: true,
@@ -214,7 +237,8 @@ const StopwatchWidget = ({ onOpen }) => {
         left: `${position.x}px`,
         top: `${position.y}px`,
         cursor: isDragging ? 'grabbing' : 'grab',
-        touchAction: 'none'
+        touchAction: 'none',
+        maxWidth: 'calc(100vw - 20px)' // Responsive en móvil
       }}
     >
       {/* Widget compacto */}
@@ -226,16 +250,16 @@ const StopwatchWidget = ({ onOpen }) => {
             isDragging ? 'scale-105' : ''
           }`}
         >
-          <div className="p-4 flex items-center gap-3">
+          <div className="p-3 flex items-center gap-2 md:p-4 md:gap-3">
             <div className="bg-white bg-opacity-20 p-2 rounded-xl backdrop-blur-sm">
-              <Timer className="w-6 h-6 animate-pulse" />
+              <Timer className="w-5 h-5 animate-pulse md:w-6 md:h-6" />
             </div>
-            <div className="text-left">
-              <div className="text-xs font-semibold opacity-90 flex items-center gap-2">
-                <Move className="w-3 h-3" />
-                {isPaused ? '⏸️ Pausado' : '⏱️ Activo'}
+            <div className="text-left flex-1 min-w-0">
+              <div className="text-xs font-semibold opacity-90 flex items-center gap-1">
+                <Move className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{isPaused ? '⏸️ Pausado' : '⏱️ Activo'}</span>
               </div>
-              <div className="text-xl font-bold font-mono tracking-wider">
+              <div className="text-lg font-bold font-mono tracking-wider md:text-xl">
                 {timeFormatted.display}
               </div>
             </div>
@@ -244,7 +268,8 @@ const StopwatchWidget = ({ onOpen }) => {
                 e.stopPropagation();
                 setIsExpanded(true);
               }}
-              className="hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors ml-2"
+              className="hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors flex-shrink-0"
+              aria-label="Expandir"
             >
               <ChevronUp className="w-5 h-5" />
             </button>
@@ -252,14 +277,14 @@ const StopwatchWidget = ({ onOpen }) => {
         </div>
       ) : (
         /* Widget expandido */
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl shadow-2xl border-2 border-white overflow-hidden w-80">
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl shadow-2xl border-2 border-white overflow-hidden w-80 max-w-full">
           {/* Header draggable */}
           <div
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
-            className={`bg-gradient-to-r from-orange-500 to-red-600 p-4 flex items-center justify-between ${
+            className={`bg-gradient-to-r from-orange-500 to-red-600 p-3 flex items-center justify-between ${
               isDragging ? 'cursor-grabbing' : 'cursor-grab'
-            }`}
+            } md:p-4`}
           >
             <div className="flex items-center gap-2">
               <Move className="w-4 h-4" />
@@ -272,29 +297,30 @@ const StopwatchWidget = ({ onOpen }) => {
                 setIsExpanded(false);
               }}
               className="hover:bg-white hover:bg-opacity-20 p-1 rounded transition-colors"
+              aria-label="Contraer"
             >
               <ChevronDown className="w-5 h-5" />
             </button>
           </div>
 
           {/* Display del tiempo */}
-          <div className="p-6 text-center">
+          <div className="p-4 text-center md:p-6">
             <div className="text-xs text-gray-400 mb-2 font-semibold">
               {isPaused ? '⏸️ PAUSADO' : '⏱️ EN EJECUCIÓN'}
             </div>
             <div className="flex items-center justify-center gap-1 mb-2">
               <div className="text-center">
-                <div className="text-4xl font-bold font-mono">{timeFormatted.hours}</div>
+                <div className="text-3xl font-bold font-mono md:text-4xl">{timeFormatted.hours}</div>
                 <div className="text-xs text-gray-400">hrs</div>
               </div>
-              <div className="text-3xl font-bold text-gray-500">:</div>
+              <div className="text-2xl font-bold text-gray-500 md:text-3xl">:</div>
               <div className="text-center">
-                <div className="text-4xl font-bold font-mono">{timeFormatted.minutes}</div>
+                <div className="text-3xl font-bold font-mono md:text-4xl">{timeFormatted.minutes}</div>
                 <div className="text-xs text-gray-400">min</div>
               </div>
-              <div className="text-3xl font-bold text-gray-500">:</div>
+              <div className="text-2xl font-bold text-gray-500 md:text-3xl">:</div>
               <div className="text-center">
-                <div className="text-4xl font-bold font-mono">{timeFormatted.seconds}</div>
+                <div className="text-3xl font-bold font-mono md:text-4xl">{timeFormatted.seconds}</div>
                 <div className="text-xs text-gray-400">seg</div>
               </div>
             </div>
@@ -304,23 +330,23 @@ const StopwatchWidget = ({ onOpen }) => {
           </div>
 
           {/* Controles */}
-          <div className="p-4 space-y-2 bg-gray-800">
+          <div className="p-3 space-y-2 bg-gray-800 md:p-4">
             {/* Play/Pause */}
             {!isPaused ? (
               <button
                 onClick={handlePause}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-95 md:py-3"
               >
                 <Pause className="w-5 h-5" />
-                Pausar
+                <span>Pausar</span>
               </button>
             ) : (
               <button
                 onClick={handleResume}
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-95 md:py-3"
               >
                 <Play className="w-5 h-5" />
-                Reanudar
+                <span>Reanudar</span>
               </button>
             )}
 
@@ -328,31 +354,31 @@ const StopwatchWidget = ({ onOpen }) => {
             <button
               onClick={handleSave}
               disabled={time === 0}
-              className={`w-full font-bold py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-95 ${
+              className={`w-full font-bold py-2.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-95 md:py-3 ${
                 time === 0
                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                   : 'bg-blue-500 hover:bg-blue-600 text-white'
               }`}
             >
               <Save className="w-5 h-5" />
-              Guardar como Actividad
+              <span className="text-sm md:text-base">Guardar Actividad</span>
             </button>
 
             {/* Acciones secundarias */}
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleReset}
-                className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-95"
+                className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded-xl transition-all duration-200 flex items-center justify-center gap-1 active:scale-95 text-sm"
               >
                 <RotateCcw className="w-4 h-4" />
-                Reiniciar
+                <span>Reiniciar</span>
               </button>
               <button
                 onClick={handleStop}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-95"
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-xl transition-all duration-200 flex items-center justify-center gap-1 active:scale-95 text-sm"
               >
                 <Square className="w-4 h-4" />
-                Detener
+                <span>Detener</span>
               </button>
             </div>
           </div>
@@ -363,4 +389,5 @@ const StopwatchWidget = ({ onOpen }) => {
 };
 
 export default StopwatchWidget;
+
 

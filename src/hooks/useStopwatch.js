@@ -88,6 +88,14 @@ export const useStopwatch = () => {
       startTimeRef.current = Date.now() - (time * 1000);
       setIsRunning(true);
       setIsPaused(false);
+      
+      // CRÍTICO: Guardar en localStorage inmediatamente
+    localStorage.setItem('stopwatchState', JSON.stringify({
+      savedTime: time,
+      savedIsRunning: true,
+      savedStartTime: startTimeRef.current
+    }));
+
     }
   }, [time, isRunning]);
 

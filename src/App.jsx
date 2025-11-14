@@ -7,8 +7,10 @@ import SettingsModal from './components/SettingsModal';
 import StopwatchWidget from './components/StopwatchWidget';
 import FloatingActionButton from './components/FloatingActionButton';
 import BottomNav from './components/BottomNav';
+import { useToast } from './contexts/ToastContext';
 
 function App() {
+  const { showToast } = useToast();
   const [currentView, setCurrentView] = useState('register');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [publisherType, setPublisherType] = useState('publicador');
@@ -108,18 +110,20 @@ function App() {
 
   // Escuchar cambios en el localStorage para el cronómetro
   useEffect(() => {
-    const handleStorageChange = () => {
-      const stopwatchState = localStorage.getItem('stopwatchState');
-      setShowStopwatchWidget(!!stopwatchState);
-    };
+  const handleStorageChange = () => {
+    const stopwatchState = localStorage.getItem('stopwatchState');
+    console.log('🔍 Stopwatch State:', stopwatchState); // LOG DE DEBUG
+    setShowStopwatchWidget(!!stopwatchState);
+  };
 
     window.addEventListener('storage', handleStorageChange);
     
     // Verificar cada segundo si hay cambios
-    const interval = setInterval(() => {
-      const stopwatchState = localStorage.getItem('stopwatchState');
-      setShowStopwatchWidget(!!stopwatchState);
-    }, 1000);
+     const interval = setInterval(() => {
+    const stopwatchState = localStorage.getItem('stopwatchState');
+    console.log('⏱️ Checking stopwatch:', !!stopwatchState); // LOG DE DEBUG
+    setShowStopwatchWidget(!!stopwatchState);
+  }, 1000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -158,6 +162,7 @@ function App() {
   const handleSave = (activity) => {
     setActivities([...activities, activity]);
     setEditingActivity(null);
+    showToast('✅ Actividad guardada correctamente', 'success');
   };
 
   const handleUpdate = (updatedActivity) => {
@@ -165,6 +170,7 @@ function App() {
       a.id === updatedActivity.id ? updatedActivity : a
     ));
     setEditingActivity(null);
+    showToast('✅ Actividad actualizada correctamente', 'success');
   };
 
   const handleEdit = (activity) => {
@@ -177,6 +183,7 @@ function App() {
 
   const handleDelete = (id) => {
     setActivities(activities.filter(a => a.id !== id));
+    showToast('🗑️ Actividad eliminada', 'info');
   };
 
   const handleImport = (importedActivities, importedPublisherType) => {
@@ -186,6 +193,7 @@ function App() {
     if (importedPublisherType) {
       setPublisherType(importedPublisherType);
     }
+    showToast('📥 Datos importados exitosamente', 'success');
   };
 
   const handleOpenManualForm = () => {
@@ -267,7 +275,7 @@ function App() {
 
       {/* Widget flotante del cronómetro */}
       {showStopwatchWidget && (
-        <StopwatchWidget onOpen={handleOpenStopwatch} />
+  <StopwatchWidget onOpen={handleOpenStopwatch} />
       )}
 
       {showSettingsModal && (
