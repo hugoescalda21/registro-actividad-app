@@ -15,6 +15,7 @@ function App() {
   const [showStopwatchWidget, setShowStopwatchWidget] = useState(false);
   const [triggerFormOpen, setTriggerFormOpen] = useState(0);
   const [triggerStopwatchOpen, setTriggerStopwatchOpen] = useState(0);
+  const [editingActivity, setEditingActivity] = useState(null);
 
   // Tipos de publicadores
   const publisherTypes = {
@@ -157,10 +158,21 @@ function App() {
     setActivities([...activities, activity]);
   };
 
-  const handleEdit = (activity) => {
-    setActivities(activities.map(a => a.id === activity.id ? activity : a));
-    setCurrentView('history');
-  };
+ const handleEdit = (activity) => {
+  setEditingActivity(activity);
+  setCurrentView('register');
+  setTimeout(() => {
+    setTriggerFormOpen(prev => prev + 1);
+  }, 100);
+};
+
+// Crear función handleUpdate
+const handleUpdate = (updatedActivity) => {
+  setActivities(activities.map(a => 
+    a.id === updatedActivity.id ? updatedActivity : a
+  ));
+  setEditingActivity(null);
+};
 
   const handleDelete = (id) => {
     setActivities(activities.filter(a => a.id !== id));
@@ -199,14 +211,16 @@ function App() {
       <main className="max-w-4xl mx-auto px-4 py-6 pb-24">
         <div className="animate-fadeIn">
           {currentView === 'register' && (
-            <RegisterView
-              onSave={handleSave}
-              config={publisherTypes[publisherType]}
-              activities={activities}
-              triggerFormOpen={triggerFormOpen}
-              triggerStopwatchOpen={triggerStopwatchOpen}
-            />
-          )}
+  <RegisterView
+    onSave={handleSave}
+    onUpdate={handleUpdate}
+    config={publisherTypes[publisherType]}
+    activities={activities}
+    triggerFormOpen={triggerFormOpen}
+    triggerStopwatchOpen={triggerStopwatchOpen}
+    editingActivity={editingActivity}
+  />
+)}
 
           {currentView === 'stats' && (
             <StatsView

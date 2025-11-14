@@ -2,9 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, BookOpen, Award, FileText, Save, X, CheckCircle } from 'lucide-react';
 import Stopwatch from './Stopwatch';
 
-const RegisterView = ({ onSave, config, activities, triggerFormOpen, triggerStopwatchOpen }) => {
+const RegisterView = ({ 
+  onSave, 
+  config, 
+  activities, 
+  triggerFormOpen, 
+  triggerStopwatchOpen,
+  editingActivity,
+  onUpdate 
+}) => {
   const [showForm, setShowForm] = useState(false);
   const [showStopwatch, setShowStopwatch] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     hours: '',
@@ -14,19 +23,46 @@ const RegisterView = ({ onSave, config, activities, triggerFormOpen, triggerStop
     notes: ''
   });
 
-  // Escuchar trigger para abrir formulario
+  // Cargar datos para edición
   useEffect(() => {
-    if (triggerFormOpen > 0) {
+    if (editingActivity) {
+      setFormData({
+        date: editingActivity.date,
+        hours: editingActivity.hours || '',
+        studies: editingActivity.studies || '',
+        approvedHours: editingActivity.approvedHours || '',
+        approvedDetail: editingActivity.approvedDetail || '',
+        notes: editingActivity.notes || ''
+      });
+      setIsEditing(true);
       setShowForm(true);
       setShowStopwatch(false);
     }
-  }, [triggerFormOpen]);
+  }, [editingActivity]);
+
+  // Escuchar trigger para abrir formulario
+  useEffect(() => {
+    if (triggerFormOpen > 0 && !editingActivity) {
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        hours: '',
+        studies: '',
+        approvedHours: '',
+        approvedDetail: '',
+        notes: ''
+      });
+      setIsEditing(false);
+      setShowForm(true);
+      setShowStopwatch(false);
+    }
+  }, [triggerFormOpen, editingActivity]);
 
   // Escuchar trigger para abrir cronómetro
   useEffect(() => {
     if (triggerStopwatchOpen > 0) {
       setShowStopwatch(true);
       setShowForm(false);
+      setIsEditing(false);
     }
   }, [triggerStopwatchOpen]);
 
@@ -40,7 +76,7 @@ const RegisterView = ({ onSave, config, activities, triggerFormOpen, triggerStop
     }
 
     const activity = {
-      id: Date.now(),
+      id: isEditing ? editingActivity.id : Date.now(),
       date: formData.date,
       hours: config.canLogHours ? parseFloat(formData.hours) || 0 : 0,
       placements: 0,
@@ -52,7 +88,13 @@ const RegisterView = ({ onSave, config, activities, triggerFormOpen, triggerStop
       notes: formData.notes.trim()
     };
 
-    onSave(activity);
+    if (isEditing && onUpdate) {
+      onUpdate(activity);
+    } else {
+      onSave(activity);
+    }
+
+    // Resetear formulario
     setFormData({
       date: new Date().toISOString().split('T')[0],
       hours: '',
@@ -62,6 +104,20 @@ const RegisterView = ({ onSave, config, activities, triggerFormOpen, triggerStop
       notes: ''
     });
     setShowForm(false);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setIsEditing(false);
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      hours: '',
+      studies: '',
+      approvedHours: '',
+      approvedDetail: '',
+      notes: ''
+    });
   };
 
   const handleStopwatchSave = (hours) => {
@@ -143,10 +199,10 @@ const RegisterView = ({ onSave, config, activities, triggerFormOpen, triggerStop
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
               <FileText className="w-6 h-6 text-blue-600" />
-              Nueva Actividad
+              {isEditing ? 'Editar Actividad' : 'Nueva Actividad'}
             </h2>
             <button
-              onClick={() => setShowForm(false)}
+              onClick={handleCancel}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <X className="w-5 h-5 text-gray-600" />
@@ -265,26 +321,11 @@ const RegisterView = ({ onSave, config, activities, triggerFormOpen, triggerStop
               />
             </div>
 
-            {/* Información del tipo de publicador */}
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-              <p className="text-sm text-blue-800 font-medium">
-                <span className="font-bold">ℹ️ Campos disponibles para {config.label}:</span>
-                <br />
-                {config.canLogHours && '• Horas de predicación'}
-                {config.canLogHours && <br />}
-                • Estudios bíblicos
-                {config.canLogApproved && <br />}
-                {config.canLogApproved && '• Horas aprobadas con detalle'}
-                <br />
-                • Notas
-              </p>
-            </div>
-
             {/* Botones */}
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={handleCancel}
                 className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
               >
                 Cancelar
@@ -294,7 +335,7 @@ const RegisterView = ({ onSave, config, activities, triggerFormOpen, triggerStop
                 className="flex-1 btn-primary flex items-center justify-center gap-2"
               >
                 <Save className="w-5 h-5" />
-                Guardar Actividad
+                {isEditing ? 'Actualizar' : 'Guardar'} Actividad
               </button>
             </div>
           </form>
