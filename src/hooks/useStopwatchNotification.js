@@ -1,58 +1,74 @@
 import { useEffect, useRef } from 'react';
+import { 
+  isAndroid, 
+  updateAndroidStopwatchNotification, 
+  hideAndroidStopwatchNotification 
+} from '../utils/androidNotifications';
+import { loadNotificationSettings } from '../utils/notificationUtils';
 
 export const useStopwatchNotification = (time, isRunning, isPaused) => {
   const notificationUpdateInterval = useRef(null);
   const lastNotificationTime = useRef(0);
 
   useEffect(() => {
-    // Verificar si Service Worker está disponible
+    // Verificar configuración
+    const settings = loadNotificationSettings();
+    if (!settings.enabled || !settings.persistentStopwatch) {
+      return;
+    }
+
+    // Verificar Service Worker
     if (!('serviceWorker' in navigator)) {
       console.warn('Service Worker no disponible');
       return;
     }
 
-    // Verificar permiso de notificaciones
+    // Verificar permiso
     if (Notification.permission !== 'granted') {
+      console.warn('Sin permiso de notificaciones');
       return;
     }
 
-    const updateNotification = () => {
-      if (navigator.serviceWorker.controller) {
-        // Solo actualizar cada 5 segundos para no saturar
-        const now = Date.now();
-        if (now - lastNotificationTime.current < 5000) {
-          return;
-        }
-        lastNotificationTime.current = now;
+    const updateNotification = async () => {
+      // Solo actualizar cada 5 segundos
+      const now = Date.now();
+      if (now - lastNotificationTime.current < 5000) {
+        return;
+      }
+      lastNotificationTime.current = now;
 
-        navigator.serviceWorker.controller.postMessage({
-          type: 'UPDATE_STOPWATCH_NOTIFICATION',
-          time,
-          isRunning,
-          isPaused
-        });
+      // Usar sistema específico para Android
+      if (isAndroid()) {
+        await updateAndroidStopwatchNotification(time, isRunning, isPaused);
+      } else {
+        // Para desktop/iOS, usar el método anterior
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'UPDATE_STOPWATCH_NOTIFICATION',
+            time,
+            isRunning,
+            isPaused
+          });
+        }
       }
     };
 
     if (isRunning || time > 0) {
       // Mostrar notificación inicial
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SHOW_STOPWATCH_NOTIFICATION',
-          time,
-          isRunning,
-          isPaused
-        });
-      }
+      updateNotification();
 
-      // Actualizar notificación cada 5 segundos
+      // Actualizar cada 5 segundos
       notificationUpdateInterval.current = setInterval(updateNotification, 5000);
     } else {
-      // Ocultar notificación si no hay cronómetro activo
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'HIDE_STOPWATCH_NOTIFICATION'
-        });
+      // Ocultar notificación
+      if (isAndroid()) {
+        hideAndroidStopwatchNotification();
+      } else {
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'HIDE_STOPWATCH_NOTIFICATION'
+          });
+        }
       }
     }
 
@@ -71,24 +87,16 @@ export const useStopwatchNotification = (time, isRunning, isPaused) => {
       if (event.data) {
         switch (event.data.type) {
           case 'PAUSE_STOPWATCH':
-            // Pausar cronómetro desde notificación
-            const pauseEvent = new CustomEvent('stopwatch-pause');
-            window.dispatchEvent(pauseEvent);
+            window.dispatchEvent(new CustomEvent('stopwatch-pause'));
             break;
           case 'RESUME_STOPWATCH':
-            // Reanudar cronómetro desde notificación
-            const resumeEvent = new CustomEvent('stopwatch-resume');
-            window.dispatchEvent(resumeEvent);
+            window.dispatchEvent(new CustomEvent('stopwatch-resume'));
             break;
           case 'SAVE_STOPWATCH':
-            // Guardar cronómetro desde notificación
-            const saveEvent = new CustomEvent('stopwatch-save');
-            window.dispatchEvent(saveEvent);
+            window.dispatchEvent(new CustomEvent('stopwatch-save'));
             break;
           case 'STOP_STOPWATCH':
-            // Detener cronómetro desde notificación
-            const stopEvent = new CustomEvent('stopwatch-stop');
-            window.dispatchEvent(stopEvent);
+            window.dispatchEvent(new CustomEvent('stopwatch-stop'));
             break;
           default:
             break;
