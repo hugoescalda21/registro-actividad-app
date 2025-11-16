@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
-import { X, User, Download, Upload, Trash2, CheckCircle, AlertCircle, Database, Zap } from 'lucide-react';
+import { X, User, Download, Upload, Share2, Bell } from 'lucide-react';
+import NotificationSettings from './NotificationSettings';
 
-const SettingsModal = ({ isOpen, onClose, publisherType, onPublisherTypeChange, publisherTypes, activities, onImport }) => {
-  const [importError, setImportError] = useState('');
-  const [importSuccess, setImportSuccess] = useState(false);
+const SettingsModal = ({ 
+  isOpen, 
+  onClose, 
+  publisherType, 
+  onPublisherTypeChange, 
+  publisherTypes,
+  activities,
+  onImport 
+}) => {
+  const [activeTab, setActiveTab] = useState('general');
 
   if (!isOpen) return null;
 
@@ -12,7 +20,7 @@ const SettingsModal = ({ isOpen, onClose, publisherType, onPublisherTypeChange, 
       publisherType,
       activities,
       exportDate: new Date().toISOString(),
-      version: '2.0'
+      version: '2.3'
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -24,181 +32,234 @@ const SettingsModal = ({ isOpen, onClose, publisherType, onPublisherTypeChange, 
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = (e) => {
-    const file = e.target.files[0];
+  const handleImport = (event) => {
+    const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = (e) => {
       try {
-        const data = JSON.parse(event.target.result);
-        if (data.activities && Array.isArray(data.activities)) {
-          onImport(data.activities, data.publisherType);
-          setImportSuccess(true);
-          setImportError('');
-          setTimeout(() => {
-            setImportSuccess(false);
-            onClose();
-          }, 2000);
+        const data = JSON.parse(e.target.result);
+        
+        if (data.activities && data.publisherType) {
+          if (window.confirm('¿Deseas importar estos datos? Los datos actuales se reemplazarán.')) {
+            onImport(data.activities, data.publisherType);
+          }
         } else {
-          setImportError('Formato de archivo inválido');
+          alert('Archivo de respaldo inválido');
         }
       } catch (error) {
-        setImportError('Error al leer el archivo');
+        console.error('Error al importar:', error);
+        alert('Error al leer el archivo. Verifica que sea un respaldo válido.');
       }
     };
     reader.readAsText(file);
   };
 
-  const handleClearData = () => {
-    if (window.confirm('⚠️ ¿Estás seguro de que quieres borrar TODOS los datos? Esta acción no se puede deshacer.')) {
-      if (window.confirm('🚨 ÚLTIMA ADVERTENCIA: Se borrarán todas las actividades registradas. ¿Continuar?')) {
-        localStorage.clear();
-        window.location.reload();
-      }
-    }
+  const handleShare = () => {
+    const currentMonth = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const monthActivities = activities.filter(act => {
+      const actDate = new Date(act.date);
+      const now = new Date();
+      return actDate.getMonth() === now.getMonth() && actDate.getFullYear() === now.getFullYear();
+    });
+
+    const totalHours = monthActivities.reduce((sum, act) => sum + (act.hours || 0), 0);
+    const totalStudies = monthActivities.reduce((sum, act) => sum + (act.studies || 0), 0);
+    const config = publisherTypes[publisherType];
+
+    const message = `📊 Mi Informe de Actividad - ${currentMonth}
+
+${config.emoji} ${config.label}
+
+⏱️ Horas: ${totalHours.toFixed(1)}h${config.hours > 0 ? ` / ${config.hours}h` : ''}
+🎓 Estudios: ${totalStudies}${config.studies > 0 ? ` / ${config.studies}` : ''}
+
+📱 Registrado con Registro de Actividad`;
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
-  const totalHours = activities.reduce((sum, act) => sum + act.hours, 0);
-  const totalActivities = activities.length;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 animate-fadeIn backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fadeIn">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white p-6 rounded-t-3xl">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2 mb-1">
-                <Zap className="w-7 h-7" />
-                Configuración
-              </h2>
-              <p className="text-purple-100 text-sm font-medium">
-                Gestiona tu cuenta y datos
-              </p>
-            </div>
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <span className="text-3xl">⚙️</span>
+              Configuración
+            </h2>
             <button
               onClick={onClose}
-              className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-xl p-2 transition-all duration-200 hover-scale"
+              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
-          {/* Mensajes de estado */}
-          {importSuccess && (
-            <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 flex items-center gap-3 animate-fadeIn">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="text-green-800 font-semibold">¡Datos importados exitosamente!</span>
-            </div>
-          )}
+        {/* Tabs */}
+        <div className="flex gap-1 px-6 pt-4 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all rounded-t-lg ${
+              activeTab === 'general'
+                ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+            }`}
+          >
+            <User className="w-4 h-4" />
+            General
+          </button>
+          <button
+            onClick={() => setActiveTab('notifications')}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all rounded-t-lg ${
+              activeTab === 'notifications'
+                ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+            }`}
+          >
+            <Bell className="w-4 h-4" />
+            Notificaciones
+          </button>
+        </div>
 
-          {importError && (
-            <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 flex items-center gap-3 animate-fadeIn">
-              <AlertCircle className="w-5 h-5 text-red-600" />
-              <span className="text-red-800 font-semibold">{importError}</span>
-            </div>
-          )}
-
-          {/* Estadísticas rápidas */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-5 border-2 border-blue-200">
-            <div className="flex items-center gap-2 mb-4">
-              <Database className="w-5 h-5 text-blue-600" />
-              <h3 className="font-bold text-gray-800">Resumen de Datos</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                <div className="text-3xl font-bold text-blue-600">{totalActivities}</div>
-                <div className="text-sm text-gray-600 font-medium mt-1">Actividades</div>
-              </div>
-              <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                <div className="text-3xl font-bold text-purple-600">{totalHours.toFixed(1)}</div>
-                <div className="text-sm text-gray-600 font-medium mt-1">Horas Totales</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tipo de Publicador */}
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-              <User className="w-5 h-5 text-indigo-600" />
-              Tipo de Publicador
-            </label>
-            <div className="space-y-2">
-              {Object.entries(publisherTypes).map(([key, type]) => (
-                <button
-                  key={key}
-                  onClick={() => onPublisherTypeChange(key)}
-                  className={`w-full px-5 py-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-between border-2 ${
-                    publisherType === key
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-transparent shadow-lg scale-105'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:shadow-md hover-lift'
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="text-2xl">{type.emoji}</span>
-                    <span>{type.label}</span>
-                  </span>
-                  {publisherType === key && (
-                    <CheckCircle className="w-5 h-5" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Gestión de Datos */}
-          <div>
-            <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-              <Database className="w-5 h-5 text-gray-600" />
-              Gestión de Datos
-            </h3>
-            <div className="space-y-3">
-              {/* Exportar */}
-              <button
-                onClick={handleExport}
-                className="w-full px-5 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover-lift"
-              >
-                <Download className="w-5 h-5" />
-                Exportar Datos
-              </button>
-
-              {/* Importar */}
-              <label className="block">
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleImport}
-                  className="hidden"
-                />
-                <div className="w-full px-5 py-4 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-xl hover-lift">
-                  <Upload className="w-5 h-5" />
-                  Importar Datos
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+          {activeTab === 'general' && (
+            <div className="space-y-6">
+              {/* Tipo de publicador */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  Tipo de Publicador
+                </label>
+                <div className="space-y-2">
+                  {Object.entries(publisherTypes).map(([key, type]) => (
+                    <label
+                      key={key}
+                      className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                        publisherType === key
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="publisherType"
+                        value={key}
+                        checked={publisherType === key}
+                        onChange={(e) => onPublisherTypeChange(e.target.value)}
+                        className="w-5 h-5 text-blue-600"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{type.emoji}</span>
+                          <span className="font-semibold text-gray-800">{type.label}</span>
+                        </div>
+                        {type.hours > 0 && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Meta: {type.hours} horas
+                            {type.studies > 0 && `, ${type.studies} estudios`}
+                          </p>
+                        )}
+                      </div>
+                    </label>
+                  ))}
                 </div>
-              </label>
+              </div>
 
-              {/* Borrar todo */}
-              <button
-                onClick={handleClearData}
-                className="w-full px-5 py-4 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover-lift"
-              >
-                <Trash2 className="w-5 h-5" />
-                Borrar Todos los Datos
-              </button>
+              {/* Exportar datos */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <Download className="w-5 h-5 text-green-600" />
+                  Respaldo de Datos
+                </label>
+                <button
+                  onClick={handleExport}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                >
+                  <Download className="w-5 h-5" />
+                  💾 Exportar Respaldo
+                </button>
+                <p className="text-xs text-gray-500 mt-2">
+                  Guarda tus datos en un archivo JSON para respaldo
+                </p>
+              </div>
+
+              {/* Importar datos */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-blue-600" />
+                  Restaurar Datos
+                </label>
+                <label className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95">
+                  <Upload className="w-5 h-5" />
+                  📥 Importar Respaldo
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImport}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-xs text-gray-500 mt-2">
+                  Restaura tus datos desde un archivo de respaldo
+                </p>
+              </div>
+
+              {/* Compartir */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-purple-600" />
+                  Compartir Informe
+                </label>
+                <button
+                  onClick={handleShare}
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                >
+                  <Share2 className="w-5 h-5" />
+                  💬 Compartir por WhatsApp
+                </button>
+                <p className="text-xs text-gray-500 mt-2">
+                  Comparte tu informe del mes actual
+                </p>
+              </div>
+
+              {/* Info de la app */}
+              <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+                <h3 className="font-bold text-gray-800 mb-2">Información</h3>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p><strong>Versión:</strong> 2.3</p>
+                  <p><strong>Actividades registradas:</strong> {activities.length}</p>
+                  <p><strong>Tipo actual:</strong> {publisherTypes[publisherType].label}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Información */}
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
-            <p className="font-semibold text-gray-800 mb-2">ℹ️ Información</p>
-            <ul className="space-y-1">
-              <li>• Los datos se guardan localmente en tu dispositivo</li>
-              <li>• Exporta regularmente para hacer respaldo</li>
-              <li>• La importación reemplazará todos los datos actuales</li>
-            </ul>
-          </div>
+          {activeTab === 'notifications' && (
+            <NotificationSettings onClose={onClose} />
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="w-full btn-primary py-3"
+          >
+            Cerrar
+          </button>
         </div>
       </div>
     </div>

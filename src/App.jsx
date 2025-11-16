@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import StopwatchBanner from './components/StopwatchBanner';
 import Header from './components/Header';
 import StatsView from './components/StatsView';
 import RegisterView from './components/RegisterView';
@@ -9,6 +10,7 @@ import FloatingActionButton from './components/FloatingActionButton';
 import BottomNav from './components/BottomNav';
 import { useToast } from './contexts/ToastContext';
 import { getMonthYear } from './utils/dateUtils';
+import { useNotifications } from './hooks/useNotifications';
 
 function App() {
   const { showToast } = useToast();
@@ -157,10 +159,24 @@ function App() {
     totalStudies: currentMonthActivities.reduce((sum, act) => sum + (act.studies || 0), 0)
   };
 
+  // Hook de notificaciones
+  const { checkAchievements, checkGoalProgress, checkStreak } = useNotifications(
+    activities,
+    stats,
+    publisherTypes[publisherType]
+  );
+
   const handleSave = (activity) => {
     setActivities([...activities, activity]);
     setEditingActivity(null);
     showToast('✅ Actividad guardada correctamente', 'success');
+    
+    // Verificar logros después de guardar
+    setTimeout(() => {
+      checkAchievements();
+      checkGoalProgress();
+      checkStreak();
+    }, 500);
   };
 
   const handleUpdate = (updatedActivity) => {
@@ -169,6 +185,11 @@ function App() {
     ));
     setEditingActivity(null);
     showToast('✅ Actividad actualizada correctamente', 'success');
+    
+    // Verificar progreso después de actualizar
+    setTimeout(() => {
+      checkGoalProgress();
+    }, 500);
   };
 
   const handleEdit = (activity) => {
@@ -208,6 +229,7 @@ function App() {
 
   return (
     <div className="min-h-screen pb-20 md:pb-6">
+      {showStopwatchWidget && <StopwatchBanner />}
       <Header
         publisherType={publisherType}
         currentView={currentView}

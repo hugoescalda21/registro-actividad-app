@@ -24,20 +24,32 @@ const StopwatchWidget = ({ onOpen }) => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const widgetRef = useRef(null);
 
-  // Actualizar tiempo
+  // Actualizar tiempo - FIX: Lee correctamente sin duplicar
   useEffect(() => {
     const interval = setInterval(() => {
       const stopwatchState = localStorage.getItem('stopwatchState');
       if (stopwatchState) {
-        const { savedTime, savedIsRunning, savedStartTime } = JSON.parse(stopwatchState);
-        setIsRunning(savedIsRunning);
-        if (savedIsRunning && savedStartTime) {
-          const elapsed = Math.floor((Date.now() - savedStartTime) / 1000);
-          setTime(savedTime + elapsed);
-          setIsPaused(false);
-        } else {
-          setTime(savedTime);
-          setIsPaused(savedIsRunning && !savedStartTime);
+        try {
+          const { savedTime, savedIsRunning, savedStartTime } = JSON.parse(stopwatchState);
+          setIsRunning(savedIsRunning);
+          
+          if (savedIsRunning && savedStartTime) {
+            // El cronómetro está corriendo
+            const savedTimeValue = parseInt(localStorage.getItem('stopwatchSavedTime') || '0');
+            const elapsed = Math.floor((Date.now() - savedStartTime) / 1000);
+            setTime(savedTimeValue + elapsed);
+            setIsPaused(false);
+          } else if (savedIsRunning && !savedStartTime) {
+            // El cronómetro está pausado
+            setTime(savedTime);
+            setIsPaused(true);
+          } else {
+            // El cronómetro está detenido
+            setTime(savedTime);
+            setIsPaused(false);
+          }
+        } catch (error) {
+          console.error('Error al leer estado del cronómetro:', error);
         }
       }
     }, 100);
@@ -160,12 +172,14 @@ const StopwatchWidget = ({ onOpen }) => {
         savedIsRunning: true,
         savedStartTime: null
       }));
+      localStorage.setItem('stopwatchSavedTime', time.toString());
       setIsPaused(true);
     }
   };
 
   const handleResume = () => {
-    const newStartTime = Date.now() - (time * 1000);
+    localStorage.setItem('stopwatchSavedTime', time.toString());
+    const newStartTime = Date.now();
     localStorage.setItem('stopwatchState', JSON.stringify({
       savedTime: time,
       savedIsRunning: true,
@@ -177,6 +191,7 @@ const StopwatchWidget = ({ onOpen }) => {
   const handleStop = () => {
     if (window.confirm('¿Detener el cronómetro? El tiempo no se guardará.')) {
       localStorage.removeItem('stopwatchState');
+      localStorage.removeItem('stopwatchSavedTime');
     }
   };
 
@@ -215,6 +230,7 @@ const StopwatchWidget = ({ onOpen }) => {
       activities.push(activity);
       localStorage.setItem('activities', JSON.stringify(activities));
       localStorage.removeItem('stopwatchState');
+      localStorage.removeItem('stopwatchSavedTime');
       window.location.reload();
     }
   };
@@ -222,6 +238,7 @@ const StopwatchWidget = ({ onOpen }) => {
   const handleReset = () => {
     if (window.confirm('¿Reiniciar el cronómetro? Se perderá el tiempo actual.')) {
       localStorage.removeItem('stopwatchState');
+      localStorage.removeItem('stopwatchSavedTime');
     }
   };
 
@@ -389,5 +406,3 @@ const StopwatchWidget = ({ onOpen }) => {
 };
 
 export default StopwatchWidget;
-
-

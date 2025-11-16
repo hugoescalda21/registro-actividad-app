@@ -1,4 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { 
+  hasNotificationPermission, 
+  sendNotification, 
+  NotificationTemplates,
+  loadNotificationSettings
+} from '../utils/notificationUtils';
+import { useStopwatchNotification } from './useStopwatchNotification';
 
 export const useStopwatch = () => {
   const [time, setTime] = useState(0);
@@ -6,7 +13,9 @@ export const useStopwatch = () => {
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef(null);
   const startTimeRef = useRef(null);
-  const pausedTimeRef = useRef(0);
+
+  // Hook para manejar notificación persistente
+  useStopwatchNotification(time, isRunning, isPaused);
 
   // Cargar estado guardado al montar
   useEffect(() => {
@@ -14,121 +23,207 @@ export const useStopwatch = () => {
     if (savedState) {
       try {
         const { savedTime, savedIsRunning, savedStartTime } = JSON.parse(savedState);
+        
         if (savedIsRunning && savedStartTime) {
           const elapsed = Math.floor((Date.now() - savedStartTime) / 1000);
           setTime(savedTime + elapsed);
           setIsRunning(true);
           setIsPaused(false);
-          startTimeRef.current = Date.now() - ((savedTime + elapsed) * 1000);
-        } else if (savedIsRunning) {
-          // Está pausado
-          setTime(savedTime);
-          setIsRunning(true);
-          setIsPaused(true);
-          pausedTimeRef.current = savedTime;
+          startTimeRef.current = savedStartTime;
         } else {
           setTime(savedTime);
+          setIsRunning(false);
+          setIsPaused(true);
         }
       } catch (error) {
-        console.error('Error al cargar cronómetro:', error);
-        localStorage.removeItem('stopwatchState');
+        console.error('Error al cargar estado del cronómetro:', error);
       }
     }
   }, []);
 
-  // Guardar estado
-  useEffect(() => {
-    if (isRunning) {
-      const stateToSave = {
-        savedTime: time,
-        savedIsRunning: isRunning,
-        savedStartTime: isPaused ? null : startTimeRef.current
-      };
-      localStorage.setItem('stopwatchState', JSON.stringify(stateToSave));
-    } else if (time === 0) {
-      localStorage.removeItem('stopwatchState');
-    }
-  }, [time, isRunning, isPaused]);
-
-  // Actualizar tiempo
+  // Actualizar el tiempo cada segundo
   useEffect(() => {
     if (isRunning && !isPaused) {
       intervalRef.current = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setTime(elapsed);
-      }, 100); // Actualizar cada 100ms para mayor precisión
-
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
-      };
+        const savedTime = parseInt(localStorage.getItem('stopwatchSavedTime') || '0');
+        setTime(savedTime + elapsed);
+      }, 1000);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [isRunning, isPaused]);
 
-  // Notificación cada hora
+  // Guardar estado en localStorage
+  useEffect(() => {
+    if (isRunning || isPaused) {
+      const state = {
+        savedTime: time,
+        savedIsRunning: isRunning && !isPaused,
+        savedStartTime: startTimeRef.current
+      };
+      localStorage.setItem('stopwatchState', JSON.stringify(state));
+      localStorage.setItem('stopwatchSavedTime', time.toString());
+    }
+  }, [time, isRunning, isPaused]);
+
+  // Notificaciones cada hora
   useEffect(() => {
     if (time > 0 && time % 3600 === 0 && isRunning && !isPaused) {
       const hours = Math.floor(time / 3600);
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('⏱️ Cronómetro', {
-          body: `¡Has completado ${hours} hora${hours > 1 ? 's' : ''}!`,
-          icon: '/icon-192.png'
-        });
+      
+      const settings = loadNotificationSettings();
+      
+      if (settings.enabled && hasNotificationPermission()) {
+        const { title, options } = NotificationTemplates.hourMilestone(hours);
+        sendNotification(title, options);
       }
     }
   }, [time, isRunning, isPaused]);
 
+  // Escuchar eventos del Service Worker
+  useEffect(() => {
+    const handlePauseEvent = () => {
+      pause();
+    };
+
+    const handleResumeEvent = () => {
+      resume();
+    };
+
+    const handleSaveEvent = () => {
+      // Guardar actividad
+      if (time > 0) {
+        const hours = time / 3600;
+        const activity = {
+          id: Date.now(),
+          date: new Date().toISOString().split('T')[0],
+          hours: parseFloat(hours.toFixed(2)),
+          placements: 0,
+          videos: 0,
+          returnVisits: 0,
+          studies: 0,
+          approvedHours: 0,
+          approvedDetail: '',
+          notes: `Registrado con cronómetro - ${getFormattedTime().hours}:${getFormattedTime().minutes}:${getFormattedTime().seconds}`
+        };
+
+        const savedActivities = localStorage.getItem('activities');
+        let activities = [];
+        if (savedActivities) {
+          try {
+            activities = JSON.parse(savedActivities);
+          } catch (error) {
+            console.error('Error al cargar actividades:', error);
+          }
+        }
+
+        activities.push(activity);
+        localStorage.setItem('activities', JSON.stringify(activities));
+        stop();
+        window.location.reload();
+      }
+    };
+
+    const handleStopEvent = () => {
+      stop();
+    };
+
+    window.addEventListener('stopwatch-pause', handlePauseEvent);
+    window.addEventListener('stopwatch-resume', handleResumeEvent);
+    window.addEventListener('stopwatch-save', handleSaveEvent);
+    window.addEventListener('stopwatch-stop', handleStopEvent);
+
+    return () => {
+      window.removeEventListener('stopwatch-pause', handlePauseEvent);
+      window.removeEventListener('stopwatch-resume', handleResumeEvent);
+      window.removeEventListener('stopwatch-save', handleSaveEvent);
+      window.removeEventListener('stopwatch-stop', handleStopEvent);
+    };
+  }, [time]);
+
   const start = useCallback(() => {
     if (!isRunning) {
-      startTimeRef.current = Date.now() - (time * 1000);
+      startTimeRef.current = Date.now();
       setIsRunning(true);
       setIsPaused(false);
+      localStorage.setItem('stopwatchSavedTime', '0');
       
-      // CRÍTICO: Guardar en localStorage inmediatamente
-    localStorage.setItem('stopwatchState', JSON.stringify({
-      savedTime: time,
-      savedIsRunning: true,
-      savedStartTime: startTimeRef.current
-    }));
-
+      const state = {
+        savedTime: 0,
+        savedIsRunning: true,
+        savedStartTime: Date.now()
+      };
+      localStorage.setItem('stopwatchState', JSON.stringify(state));
     }
-  }, [time, isRunning]);
+  }, [isRunning]);
 
   const pause = useCallback(() => {
-    setIsPaused(true);
-    pausedTimeRef.current = time;
-  }, [time]);
+    if (isRunning && !isPaused) {
+      setIsPaused(true);
+      
+      const state = {
+        savedTime: time,
+        savedIsRunning: false,
+        savedStartTime: null
+      };
+      localStorage.setItem('stopwatchState', JSON.stringify(state));
+      localStorage.setItem('stopwatchSavedTime', time.toString());
+    }
+  }, [isRunning, isPaused, time]);
 
   const resume = useCallback(() => {
-    startTimeRef.current = Date.now() - (time * 1000);
-    setIsPaused(false);
-  }, [time]);
+    if (isRunning && isPaused) {
+      startTimeRef.current = Date.now();
+      setIsPaused(false);
+      localStorage.setItem('stopwatchSavedTime', time.toString());
+      
+      const state = {
+        savedTime: time,
+        savedIsRunning: true,
+        savedStartTime: Date.now()
+      };
+      localStorage.setItem('stopwatchState', JSON.stringify(state));
+    }
+  }, [isRunning, isPaused, time]);
 
   const stop = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
     setIsRunning(false);
     setIsPaused(false);
+    setTime(0);
+    startTimeRef.current = null;
     localStorage.removeItem('stopwatchState');
+    localStorage.removeItem('stopwatchSavedTime');
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   }, []);
 
   const reset = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
     setTime(0);
-    setIsRunning(false);
-    setIsPaused(false);
-    startTimeRef.current = null;
-    pausedTimeRef.current = 0;
-    localStorage.removeItem('stopwatchState');
-  }, []);
+    startTimeRef.current = Date.now();
+    localStorage.setItem('stopwatchSavedTime', '0');
+    
+    if (isRunning && !isPaused) {
+      const state = {
+        savedTime: 0,
+        savedIsRunning: true,
+        savedStartTime: Date.now()
+      };
+      localStorage.setItem('stopwatchState', JSON.stringify(state));
+    }
+  }, [isRunning, isPaused]);
 
   const getFormattedTime = useCallback(() => {
     const hours = Math.floor(time / 3600);
@@ -138,8 +233,7 @@ export const useStopwatch = () => {
     return {
       hours: hours.toString().padStart(2, '0'),
       minutes: minutes.toString().padStart(2, '0'),
-      seconds: seconds.toString().padStart(2, '0'),
-      total: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      seconds: seconds.toString().padStart(2, '0')
     };
   }, [time]);
 
