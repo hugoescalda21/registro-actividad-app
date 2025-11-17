@@ -1,8 +1,10 @@
 import React from 'react';
 import { Play, Pause, Square, RotateCcw, Save, X } from 'lucide-react';
 import { useStopwatch } from '../hooks/useStopwatch';
+import { useModal } from '../contexts/ModalContext';
 
 const Stopwatch = ({ onSave, onCancel }) => {
+  const modal = useModal();
   const {
     time,
     isRunning,
@@ -17,12 +19,12 @@ const Stopwatch = ({ onSave, onCancel }) => {
 
   const formattedTime = getFormattedTime();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (time === 0) {
-      alert('No hay tiempo para guardar');
+      await modal.warning('No hay tiempo para guardar', 'Cronómetro vacío');
       return;
     }
-    
+
     const hours = time / 3600;
     onSave(hours);
     // NO remover el estado aquí, solo cerrar el componente

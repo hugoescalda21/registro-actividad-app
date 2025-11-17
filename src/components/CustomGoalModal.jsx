@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, Target, Clock, BookOpen, Video, Users, Award, AlertCircle, RotateCcw } from 'lucide-react';
 import { saveCustomGoal, getCustomGoal, deleteCustomGoal, hasCustomGoal } from '../utils/goalUtils';
+import { useModal } from '../contexts/ModalContext';
 
 const CustomGoalModal = ({ isOpen, onClose, month, year, publisherType, publisherTypes }) => {
+  const modal = useModal();
   const [customGoals, setCustomGoals] = useState({
     hours: '',
     placements: '',
@@ -49,8 +51,12 @@ const CustomGoalModal = ({ isOpen, onClose, month, year, publisherType, publishe
     onClose();
   };
 
-  const handleReset = () => {
-    if (window.confirm('¿Restaurar metas predeterminadas para este mes?')) {
+  const handleReset = async () => {
+    const confirmed = await modal.confirm(
+      '¿Restaurar metas predeterminadas para este mes?',
+      'Restaurar metas'
+    );
+    if (confirmed) {
       deleteCustomGoal(month, year);
       onClose();
     }

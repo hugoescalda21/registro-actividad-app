@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { activityTypes } from '../utils/constants';
+import { useModal } from '../contexts/ModalContext';
 
-export const ActivityModal = ({ 
-  show, 
-  onClose, 
-  onSubmit, 
+export const ActivityModal = ({
+  show,
+  onClose,
+  onSubmit,
   editingActivity,
-  config 
+  config
 }) => {
+  const modal = useModal();
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     type: 'predicacion',
@@ -36,11 +38,11 @@ export const ActivityModal = ({
     }
   }, [editingActivity, show]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (config.canLogHours) {
       const totalMinutes = parseInt(formData.hours || 0) * 60 + parseInt(formData.minutes || 0);
       if (totalMinutes === 0 && !formData.studies) {
-        alert('Debes ingresar al menos horas o un curso bíblico');
+        await modal.warning('Debes ingresar al menos horas o un curso bíblico', 'Campo requerido');
         return;
       }
     }

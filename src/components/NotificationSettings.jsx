@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, BellOff, Clock, Target, Flame, Trophy, Calendar, Volume2, Vibrate, Timer } from 'lucide-react';
 import { isAndroid } from '../utils/androidNotifications';
-import { 
-  isNotificationSupported, 
-  hasNotificationPermission, 
+import {
+  isNotificationSupported,
+  hasNotificationPermission,
   requestNotificationPermission,
   loadNotificationSettings,
   saveNotificationSettings,
   sendNotification
 } from '../utils/notificationUtils';
+import { useModal } from '../contexts/ModalContext';
 
 const NotificationSettings = ({ onClose }) => {
+  const modal = useModal();
   const [permission, setPermission] = useState(Notification.permission);
   const [settings, setSettings] = useState(loadNotificationSettings());
   const [isSupported] = useState(isNotificationSupported());
@@ -59,9 +61,9 @@ const NotificationSettings = ({ onClose }) => {
         ]
       });
       if (success) {
-        alert('✅ Notificación enviada (revisa la barra de notificaciones)');
+        await modal.success('Notificación enviada (revisa la barra de notificaciones)', 'Éxito');
       } else {
-        alert('❌ Error al enviar notificación');
+        await modal.error('Error al enviar notificación', 'Error');
       }
     }}
     className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg"

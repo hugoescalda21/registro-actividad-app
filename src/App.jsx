@@ -12,6 +12,7 @@ import BottomNav from './components/BottomNav';
 import { useToast } from './contexts/ToastContext';
 import { getMonthYear } from './utils/dateUtils';
 import { useNotifications } from './hooks/useNotifications';
+import storage from './services/storage';
 
 function App() {
   const { showToast } = useToast();
@@ -85,45 +86,43 @@ function App() {
 
   // Cargar datos del localStorage al iniciar
   useEffect(() => {
-    const savedActivities = localStorage.getItem('activities');
-    const savedPublisherType = localStorage.getItem('publisherType');
+    try {
+      const savedActivities = storage.getActivities();
+      const savedPublisherType = storage.getPublisherType();
 
-    if (savedActivities) {
-      try {
-        setActivities(JSON.parse(savedActivities));
-      } catch (error) {
-        console.error('Error al cargar actividades:', error);
-        showToast('Error al cargar actividades guardadas', 'error');
+      if (savedActivities.length > 0) {
+        setActivities(savedActivities);
       }
-    }
 
-    if (savedPublisherType) {
       setPublisherType(savedPublisherType);
-    }
 
-    // Verificar si hay un cronómetro activo
-    const stopwatchState = localStorage.getItem('stopwatchState');
-    if (stopwatchState) {
-      setShowStopwatchWidget(true);
-    }
+      // Verificar si hay un cronómetro activo
+      const stopwatchState = storage.getStopwatchState();
+      if (stopwatchState) {
+        setShowStopwatchWidget(true);
+      }
 
-    // Solicitar permisos de notificación
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+      // Solicitar permisos de notificación
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+      showToast('Error al cargar datos guardados', 'error');
     }
   }, []);
 
   // Escuchar cambios en el localStorage para el cronómetro
   useEffect(() => {
     const handleStorageChange = () => {
-      const stopwatchState = localStorage.getItem('stopwatchState');
+      const stopwatchState = storage.getStopwatchState();
       setShowStopwatchWidget(!!stopwatchState);
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
+
     const interval = setInterval(() => {
-      const stopwatchState = localStorage.getItem('stopwatchState');
+      const stopwatchState = storage.getStopwatchState();
       setShowStopwatchWidget(!!stopwatchState);
     }, 1000);
 
@@ -135,12 +134,12 @@ function App() {
 
   // Guardar actividades en localStorage cuando cambien
   useEffect(() => {
-    localStorage.setItem('activities', JSON.stringify(activities));
+    storage.setActivities(activities);
   }, [activities]);
 
   // Guardar tipo de publicador en localStorage cuando cambie
   useEffect(() => {
-    localStorage.setItem('publisherType', publisherType);
+    storage.setPublisherType(publisherType);
   }, [publisherType]);
 
   // Calcular estadísticas del mes actual usando dateUtils

@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Copy, Wand2, Save, X } from 'lucide-react';
 import { getMonthYear } from '../utils/dateUtils';
+import { useModal } from '../contexts/ModalContext';
 
 const PlanningView = ({ activities, config }) => {
+  const modal = useModal();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [plannedDays, setPlannedDays] = useState(() => {
@@ -167,19 +169,23 @@ const PlanningView = ({ activities, config }) => {
     setPlannedHours('');
   };
 
-  const handleCopyPreviousMonth = () => {
+  const handleCopyPreviousMonth = async () => {
     const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
     const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
-    
+
     const prevMonthPlans = Object.entries(plannedDays)
       .filter(([key]) => key.startsWith(`${prevYear}-${prevMonth.toString().padStart(2, '0')}`));
 
     if (prevMonthPlans.length === 0) {
-      alert('No hay plan del mes anterior para copiar');
+      await modal.info('No hay plan del mes anterior para copiar', 'Sin plan previo');
       return;
     }
 
-    if (!window.confirm('¿Copiar la planificación del mes anterior?')) {
+    const confirmed = await modal.confirm(
+      '¿Copiar la planificación del mes anterior?',
+      'Copiar planificación'
+    );
+    if (!confirmed) {
       return;
     }
 
@@ -196,11 +202,15 @@ const PlanningView = ({ activities, config }) => {
 
     savePlans(newPlans);
     setShowTemplates(false);
-    alert('✅ Plan copiado exitosamente');
+    await modal.success('Plan copiado exitosamente', 'Éxito');
   };
 
-  const handleUseTemplate = (template) => {
-    if (!window.confirm(`¿Aplicar plantilla "${template.name}"?`)) {
+  const handleUseTemplate = async (template) => {
+    const confirmed = await modal.confirm(
+      `¿Aplicar plantilla "${template.name}"?`,
+      'Aplicar plantilla'
+    );
+    if (!confirmed) {
       return;
     }
 
@@ -219,7 +229,7 @@ const PlanningView = ({ activities, config }) => {
 
     savePlans(newPlans);
     setShowTemplates(false);
-    alert('✅ Plantilla aplicada exitosamente');
+    await modal.success('Plantilla aplicada exitosamente', 'Éxito');
   };
 
   const templates = [
