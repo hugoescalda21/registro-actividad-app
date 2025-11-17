@@ -9,106 +9,50 @@ import SettingsModal from './components/SettingsModal';
 import StopwatchWidget from './components/StopwatchWidget';
 import FloatingActionButton from './components/FloatingActionButton';
 import BottomNav from './components/BottomNav';
-import { useToast } from './contexts/ToastContext';
-import { getMonthYear } from './utils/dateUtils';
+import { usePublisher } from './contexts/PublisherContext';
+import { useActivitiesManager } from './hooks/useActivitiesManager';
+import { useStatsCalculation } from './hooks/useStatsCalculation';
 import { useNotifications } from './hooks/useNotifications';
 import storage from './services/storage';
 
 function App() {
-  const { showToast } = useToast();
+  // Contextos y hooks personalizados
+  const { publisherType, setPublisherType, config, publisherTypes, canLogHours } = usePublisher();
+  const {
+    activities,
+    editingActivity,
+    addActivity,
+    updateActivity,
+    deleteActivity,
+    startEditing,
+    importActivities
+  } = useActivitiesManager();
+  const { stats } = useStatsCalculation(activities);
+
+  // Estados locales
   const [currentView, setCurrentView] = useState('register');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [publisherType, setPublisherType] = useState('publicador');
-  const [activities, setActivities] = useState([]);
   const [showStopwatchWidget, setShowStopwatchWidget] = useState(false);
   const [triggerFormOpen, setTriggerFormOpen] = useState(0);
   const [triggerStopwatchOpen, setTriggerStopwatchOpen] = useState(0);
-  const [editingActivity, setEditingActivity] = useState(null);
 
-  // Tipos de publicadores
-  const publisherTypes = {
-    publicador: {
-      label: 'Publicador',
-      emoji: '📖',
-      hours: 0,
-      placements: 0,
-      videos: 0,
-      returnVisits: 0,
-      studies: 0,
-      canLogHours: false,
-      canLogApproved: false
-    },
-    auxiliar15: {
-      label: 'Precursor Auxiliar (15 hrs)',
-      emoji: '⭐',
-      hours: 15,
-      placements: 0,
-      videos: 0,
-      returnVisits: 0,
-      studies: 0,
-      canLogHours: true,
-      canLogApproved: false
-    },
-    auxiliar30: {
-      label: 'Precursor Auxiliar (30 hrs)',
-      emoji: '🌟',
-      hours: 30,
-      placements: 0,
-      videos: 0,
-      returnVisits: 0,
-      studies: 0,
-      canLogHours: true,
-      canLogApproved: false
-    },
-    regular: {
-      label: 'Precursor Regular',
-      emoji: '💎',
-      hours: 50,
-      placements: 15,
-      videos: 8,
-      returnVisits: 6,
-      studies: 2,
-      canLogHours: true,
-      canLogApproved: true
-    },
-    especial: {
-      label: 'Precursor Especial',
-      emoji: '✨',
-      hours: 100,
-      placements: 20,
-      videos: 10,
-      returnVisits: 8,
-      studies: 3,
-      canLogHours: true,
-      canLogApproved: true
-    }
-  };
+  // Hook de notificaciones
+  const { checkAchievements, checkGoalProgress, checkStreak } = useNotifications(
+    activities,
+    stats,
+    config
+  );
 
-  // Cargar datos del localStorage al iniciar
+  // Verificar cronómetro activo al iniciar
   useEffect(() => {
-    try {
-      const savedActivities = storage.getActivities();
-      const savedPublisherType = storage.getPublisherType();
+    const stopwatchState = storage.getStopwatchState();
+    if (stopwatchState) {
+      setShowStopwatchWidget(true);
+    }
 
-      if (savedActivities.length > 0) {
-        setActivities(savedActivities);
-      }
-
-      setPublisherType(savedPublisherType);
-
-      // Verificar si hay un cronómetro activo
-      const stopwatchState = storage.getStopwatchState();
-      if (stopwatchState) {
-        setShowStopwatchWidget(true);
-      }
-
-      // Solicitar permisos de notificación
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-    } catch (error) {
-      console.error('Error al cargar datos:', error);
-      showToast('Error al cargar datos guardados', 'error');
+    // Solicitar permisos de notificación
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
     }
   }, []);
 
@@ -132,54 +76,10 @@ function App() {
     };
   }, []);
 
-  // Guardar actividades en localStorage cuando cambien
-  useEffect(() => {
-    storage.setActivities(activities);
-  }, [activities]);
-
-  // Guardar tipo de publicador en localStorage cuando cambie
-  useEffect(() => {
-    storage.setPublisherType(publisherType);
-  }, [publisherType]);
-
-  // Calcular estadísticas del mes actual usando dateUtils
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
-  
-  const currentMonthActivities = activities.filter(activity => {
-    const { month, year } = getMonthYear(activity.date);
-    return month === currentMonth && year === currentYear;
-  });
-
-  const stats = {
-  // Horas totales = predicación + aprobadas
-  totalHours: currentMonthActivities.reduce((sum, act) => {
-    const preachingHours = act.hours || 0;
-    const approvedHours = act.approvedHours || 0;
-    return sum + preachingHours + approvedHours;
-  }, 0),
-  // Solo horas de predicación (para mostrar por separado si es necesario)
-  preachingHours: currentMonthActivities.reduce((sum, act) => sum + (act.hours || 0), 0),
-  // Solo horas aprobadas (para mostrar por separado si es necesario)
-  approvedHours: currentMonthActivities.reduce((sum, act) => sum + (act.approvedHours || 0), 0),
-  totalPlacements: currentMonthActivities.reduce((sum, act) => sum + (act.placements || 0), 0),
-  totalVideos: currentMonthActivities.reduce((sum, act) => sum + (act.videos || 0), 0),
-  totalReturnVisits: currentMonthActivities.reduce((sum, act) => sum + (act.returnVisits || 0), 0),
-  totalStudies: currentMonthActivities.reduce((sum, act) => sum + (act.studies || 0), 0)
-};
-
-  // Hook de notificaciones
-  const { checkAchievements, checkGoalProgress, checkStreak } = useNotifications(
-    activities,
-    stats,
-    publisherTypes[publisherType]
-  );
-
+  // Handlers de actividades
   const handleSave = (activity) => {
-    setActivities([...activities, activity]);
-    setEditingActivity(null);
-    showToast('✅ Actividad guardada correctamente', 'success');
-    
+    addActivity(activity);
+
     // Verificar logros después de guardar
     setTimeout(() => {
       checkAchievements();
@@ -189,12 +89,8 @@ function App() {
   };
 
   const handleUpdate = (updatedActivity) => {
-    setActivities(activities.map(a => 
-      a.id === updatedActivity.id ? updatedActivity : a
-    ));
-    setEditingActivity(null);
-    showToast('✅ Actividad actualizada correctamente', 'success');
-    
+    updateActivity(updatedActivity);
+
     // Verificar progreso después de actualizar
     setTimeout(() => {
       checkGoalProgress();
@@ -202,7 +98,7 @@ function App() {
   };
 
   const handleEdit = (activity) => {
-    setEditingActivity(activity);
+    startEditing(activity);
     setCurrentView('register');
     setTimeout(() => {
       setTriggerFormOpen(prev => prev + 1);
@@ -210,28 +106,26 @@ function App() {
   };
 
   const handleDelete = (id) => {
-    setActivities(activities.filter(a => a.id !== id));
-    showToast('🗑️ Actividad eliminada', 'info');
+    deleteActivity(id);
   };
 
   const handleImport = (importedActivities, importedPublisherType) => {
-    if (importedActivities && Array.isArray(importedActivities)) {
-      setActivities(importedActivities);
+    if (importedActivities) {
+      importActivities(importedActivities);
     }
     if (importedPublisherType) {
       setPublisherType(importedPublisherType);
     }
-    showToast('📥 Datos importados exitosamente', 'success');
   };
 
   const handleOpenManualForm = () => {
-    setEditingActivity(null);
+    startEditing(null);
     setCurrentView('register');
     setTriggerFormOpen(prev => prev + 1);
   };
 
   const handleOpenStopwatch = () => {
-    setEditingActivity(null);
+    startEditing(null);
     setCurrentView('register');
     setTriggerStopwatchOpen(prev => prev + 1);
   };
@@ -254,7 +148,7 @@ function App() {
             <RegisterView
               onSave={handleSave}
               onUpdate={handleUpdate}
-              config={publisherTypes[publisherType]}
+              config={config}
               activities={activities}
               triggerFormOpen={triggerFormOpen}
               triggerStopwatchOpen={triggerStopwatchOpen}
@@ -266,7 +160,7 @@ function App() {
             <StatsView
               activities={activities}
               publisherType={publisherType}
-              config={publisherTypes[publisherType]}
+              config={config}
               publisherTypes={publisherTypes}
             />
           )}
@@ -282,7 +176,7 @@ function App() {
           {currentView === 'planning' && (
             <PlanningView
               activities={activities}
-              config={publisherTypes[publisherType]}
+              config={config}
             />
           )}
         </div>
@@ -296,7 +190,7 @@ function App() {
           onNewActivity={handleOpenManualForm}
           onStopwatch={handleOpenStopwatch}
           showStopwatch={showStopwatchWidget}
-          canUseStopwatch={publisherTypes[publisherType].canLogHours}
+          canUseStopwatch={canLogHours}
         />
       </div>
 
@@ -305,7 +199,7 @@ function App() {
         <FloatingActionButton
           onManualClick={handleOpenManualForm}
           onStopwatchClick={handleOpenStopwatch}
-          canUseStopwatch={publisherTypes[publisherType].canLogHours}
+          canUseStopwatch={canLogHours}
         />
       </div>
 

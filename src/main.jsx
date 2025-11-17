@@ -4,6 +4,7 @@ import App from './App.jsx';
 import './index.css';
 import { ToastProvider } from './contexts/ToastContext';
 import { ModalProvider } from './contexts/ModalContext';
+import { PublisherProvider } from './contexts/PublisherContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Registrar Service Worker con configuración para Android
@@ -58,7 +59,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <ToastProvider>
         <ModalProvider>
-          <App />
+          <PublisherProvider>
+            <App />
+          </PublisherProvider>
         </ModalProvider>
       </ToastProvider>
     </ErrorBoundary>
