@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, BookOpen, Award, FileText, Save, X, CheckCircle } from 'lucide-react';
 import Stopwatch from './Stopwatch';
 import LoadingSpinner from './LoadingSpinner';
+import DailyGoalCard from './DailyGoalCard';
 import { formatDateWithWeekday } from '../utils/dateUtils';
 
 const RegisterView = ({ 
@@ -80,7 +81,7 @@ const RegisterView = ({
 
     const activity = {
       id: isEditing ? editingActivity.id : Date.now(),
-      date: formData.date, // Se guarda como string YYYY-MM-DD (sin conversión a Date)
+      date: formData.date,
       hours: config.canLogHours ? parseFloat(formData.hours) || 0 : 0,
       placements: 0,
       videos: 0,
@@ -130,6 +131,19 @@ const RegisterView = ({
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Tarjeta de Meta Diaria - Solo si no hay formulario ni cronómetro abierto */}
+      {!showForm && !showStopwatch && (
+        <DailyGoalCard 
+          activities={activities}
+          config={config}
+          onStartStopwatch={() => {
+            setShowStopwatch(true);
+            setShowForm(false);
+          }}
+        />
+      )}
+
+      {/* Última actividad registrada */}
       {lastActivity && !showForm && !showStopwatch && (
         <div className="card-gradient p-5 border-l-4 border-blue-500 hover-lift md:p-6">
           <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
@@ -168,6 +182,7 @@ const RegisterView = ({
         </div>
       )}
 
+      {/* Mensaje cuando no hay actividades ni tarjetas */}
       {!showForm && !showStopwatch && !lastActivity && (
         <div className="card-gradient p-12 text-center">
           <div className="text-6xl mb-4">👇</div>
@@ -182,6 +197,7 @@ const RegisterView = ({
         </div>
       )}
 
+      {/* Cronómetro */}
       {showStopwatch && config.canLogHours && (
         <div className="animate-scaleIn">
           <Stopwatch
@@ -191,6 +207,7 @@ const RegisterView = ({
         </div>
       )}
 
+      {/* Formulario */}
       {showForm && (
         <div className="card-gradient p-5 animate-scaleIn md:p-6">
           <div className="flex items-center justify-between mb-6">
