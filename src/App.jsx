@@ -153,12 +153,21 @@ function App() {
   });
 
   const stats = {
-    totalHours: currentMonthActivities.reduce((sum, act) => sum + (act.hours || 0), 0),
-    totalPlacements: currentMonthActivities.reduce((sum, act) => sum + (act.placements || 0), 0),
-    totalVideos: currentMonthActivities.reduce((sum, act) => sum + (act.videos || 0), 0),
-    totalReturnVisits: currentMonthActivities.reduce((sum, act) => sum + (act.returnVisits || 0), 0),
-    totalStudies: currentMonthActivities.reduce((sum, act) => sum + (act.studies || 0), 0)
-  };
+  // Horas totales = predicación + aprobadas
+  totalHours: currentMonthActivities.reduce((sum, act) => {
+    const preachingHours = act.hours || 0;
+    const approvedHours = act.approvedHours || 0;
+    return sum + preachingHours + approvedHours;
+  }, 0),
+  // Solo horas de predicación (para mostrar por separado si es necesario)
+  preachingHours: currentMonthActivities.reduce((sum, act) => sum + (act.hours || 0), 0),
+  // Solo horas aprobadas (para mostrar por separado si es necesario)
+  approvedHours: currentMonthActivities.reduce((sum, act) => sum + (act.approvedHours || 0), 0),
+  totalPlacements: currentMonthActivities.reduce((sum, act) => sum + (act.placements || 0), 0),
+  totalVideos: currentMonthActivities.reduce((sum, act) => sum + (act.videos || 0), 0),
+  totalReturnVisits: currentMonthActivities.reduce((sum, act) => sum + (act.returnVisits || 0), 0),
+  totalStudies: currentMonthActivities.reduce((sum, act) => sum + (act.studies || 0), 0)
+};
 
   // Hook de notificaciones
   const { checkAchievements, checkGoalProgress, checkStreak } = useNotifications(

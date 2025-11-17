@@ -22,8 +22,12 @@ export const calculateMonthlyProgress = (activities, config) => {
     return month === currentMonth && year === currentYear;
   });
 
-  // Calcular total de horas del mes
-  const totalHours = monthActivities.reduce((sum, act) => sum + (act.hours || 0), 0);
+ // Calcular total de horas del mes (predicación + aprobadas)
+const totalHours = monthActivities.reduce((sum, act) => {
+  const preachingHours = act.hours || 0;
+  const approvedHours = act.approvedHours || 0;
+  return sum + preachingHours + approvedHours;
+}, 0);
 
   // Meta del mes
   const monthlyGoal = config.hours || 0;

@@ -94,7 +94,11 @@ const PlanningView = ({ activities, config }) => {
       .filter(([key]) => key.startsWith(`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`))
       .reduce((sum, [_, hours]) => sum + hours, 0);
 
-    const totalCompleted = monthActivities.reduce((sum, act) => sum + (act.hours || 0), 0);
+    const totalCompleted = monthActivities.reduce((sum, act) => {
+  const preachingHours = act.hours || 0;
+  const approvedHours = act.approvedHours || 0;
+  return sum + preachingHours + approvedHours;
+}, 0);
 
     const daysPlanned = Object.keys(plannedDays)
       .filter(key => key.startsWith(`${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`))

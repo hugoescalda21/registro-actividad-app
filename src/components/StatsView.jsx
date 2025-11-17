@@ -27,14 +27,22 @@ const StatsView = ({ activities, publisherType, config, publisherTypes }) => {
     });
   }, [activities, selectedMonth, selectedYear]);
 
-  // Calcular estadísticas
+  // Calcular estadísticas (CORREGIDO - Horas totales = predicación + aprobadas)
   const stats = useMemo(() => ({
-    totalHours: monthActivities.reduce((sum, act) => sum + (act.hours || 0), 0),
+    // Total de horas = predicación + aprobadas
+    totalHours: monthActivities.reduce((sum, act) => {
+      const preachingHours = act.hours || 0;
+      const approvedHours = act.approvedHours || 0;
+      return sum + preachingHours + approvedHours;
+    }, 0),
+    // Solo horas de predicación pura
+    preachingHours: monthActivities.reduce((sum, act) => sum + (act.hours || 0), 0),
+    // Solo horas aprobadas
+    approvedHours: monthActivities.reduce((sum, act) => sum + (act.approvedHours || 0), 0),
     totalPlacements: monthActivities.reduce((sum, act) => sum + (act.placements || 0), 0),
     totalVideos: monthActivities.reduce((sum, act) => sum + (act.videos || 0), 0),
     totalReturnVisits: monthActivities.reduce((sum, act) => sum + (act.returnVisits || 0), 0),
-    totalStudies: monthActivities.reduce((sum, act) => sum + (act.studies || 0), 0),
-    totalApprovedHours: monthActivities.reduce((sum, act) => sum + (act.approvedHours || 0), 0)
+    totalStudies: monthActivities.reduce((sum, act) => sum + (act.studies || 0), 0)
   }), [monthActivities]);
 
   // Calcular progreso
@@ -71,7 +79,7 @@ const StatsView = ({ activities, publisherType, config, publisherTypes }) => {
     return currentStreak;
   }, [activities]);
 
-  // Datos para gráfico de barras por semana
+  // Datos para gráfico de barras por semana (CORREGIDO - incluye aprobadas)
   const weeklyData = useMemo(() => {
     const weeks = [
       { name: 'Sem 1', hours: 0 },
@@ -86,7 +94,9 @@ const StatsView = ({ activities, publisherType, config, publisherTypes }) => {
       if (month === selectedMonth && year === selectedYear) {
         const day = parseInt(activity.date.split('-')[2]);
         const weekIndex = Math.min(Math.floor((day - 1) / 7), 4);
-        weeks[weekIndex].hours += activity.hours || 0;
+        // Sumar predicación + aprobadas
+        const activityHours = (activity.hours || 0) + (activity.approvedHours || 0);
+        weeks[weekIndex].hours += activityHours;
       }
     });
 
@@ -97,14 +107,14 @@ const StatsView = ({ activities, publisherType, config, publisherTypes }) => {
   const activityTypeData = useMemo(() => {
     const data = [];
     
-    if (stats.totalHours > 0) {
-      data.push({ name: 'Horas', value: stats.totalHours, color: '#3b82f6' });
+    if (stats.preachingHours > 0) {
+      data.push({ name: 'Predicación', value: stats.preachingHours, color: '#3b82f6' });
+    }
+    if (stats.approvedHours > 0) {
+      data.push({ name: 'Horas Aprobadas', value: stats.approvedHours, color: '#10b981' });
     }
     if (stats.totalStudies > 0) {
       data.push({ name: 'Estudios', value: stats.totalStudies, color: '#f59e0b' });
-    }
-    if (stats.totalApprovedHours > 0) {
-      data.push({ name: 'Horas Aprobadas', value: stats.totalApprovedHours, color: '#10b981' });
     }
 
     return data;
@@ -196,6 +206,20 @@ const StatsView = ({ activities, publisherType, config, publisherTypes }) => {
             </div>
           </div>
 
+          {/* Desglose de horas si hay aprobadas */}
+          {config.canLogApproved && stats.approvedHours > 0 && (
+            <div className="mb-3 p-3 bg-green-50 rounded-lg border-2 border-green-200">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-green-700 font-semibold">
+                  ⏱️ Predicación: {stats.preachingHours.toFixed(1)}h
+                </span>
+                <span className="text-green-700 font-semibold">
+                  ✅ Aprobadas: {stats.approvedHours.toFixed(1)}h
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="relative w-full bg-gray-200 rounded-full h-4 overflow-hidden mb-2">
             <div
               className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
@@ -228,7 +252,7 @@ const StatsView = ({ activities, publisherType, config, publisherTypes }) => {
         {config.canLogHours && (
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold opacity-90">Horas</span>
+              <span className="text-sm font-semibold opacity-90">Horas Total</span>
               <span className="text-2xl">⏱️</span>
             </div>
             <p className="text-3xl font-bold">{stats.totalHours.toFixed(1)}</p>
@@ -249,14 +273,16 @@ const StatsView = ({ activities, publisherType, config, publisherTypes }) => {
           )}
         </div>
 
-        {config.canLogApproved && stats.totalApprovedHours > 0 && (
+        {config.canLogApproved && stats.approvedHours > 0 && (
           <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 shadow-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-semibold opacity-90">Aprobadas</span>
               <span className="text-2xl">✅</span>
             </div>
-            <p className="text-3xl font-bold">{stats.totalApprovedHours.toFixed(1)}</p>
-            <p className="text-xs opacity-75 mt-1">horas</p>
+            <p className="text-3xl font-bold">{stats.approvedHours.toFixed(1)}</p>
+            <p className="text-xs opacity-75 mt-1">
+              De {stats.totalHours.toFixed(1)}h totales
+            </p>
           </div>
         )}
 
@@ -376,15 +402,26 @@ const StatsView = ({ activities, publisherType, config, publisherTypes }) => {
                       {formatDateShort(activity.date)}
                     </span>
                   </div>
-                  <div className="flex gap-2 text-sm">
+                  <div className="flex gap-2 text-sm flex-wrap justify-end">
                     {activity.hours > 0 && (
-                      <span className="badge badge-primary">{activity.hours}h</span>
-                    )}
-                    {activity.studies > 0 && (
-                      <span className="badge badge-warning">{activity.studies} 🎓</span>
+                      <span className="badge badge-primary">
+                        ⏱️ {activity.hours}h
+                      </span>
                     )}
                     {activity.approvedHours > 0 && (
-                      <span className="badge badge-success">{activity.approvedHours}h ✅</span>
+                      <span className="badge badge-success">
+                        ✅ {activity.approvedHours}h aprob
+                      </span>
+                    )}
+                    {(activity.hours > 0 && activity.approvedHours > 0) && (
+                      <span className="badge badge-info">
+                        📊 {(activity.hours + activity.approvedHours).toFixed(1)}h total
+                      </span>
+                    )}
+                    {activity.studies > 0 && (
+                      <span className="badge badge-warning">
+                        🎓 {activity.studies}
+                      </span>
                     )}
                   </div>
                 </div>
