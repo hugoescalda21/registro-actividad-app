@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, BarChart3, History, Timer, Edit, X, Calendar } from 'lucide-react';
+import { Plus, BarChart3, History, Timer, Edit, X, Calendar, Users } from 'lucide-react';
 
 const BottomNav = ({ currentView, onViewChange, onNewActivity, onStopwatch, showStopwatch, canUseStopwatch }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -136,31 +136,31 @@ const BottomNav = ({ currentView, onViewChange, onNewActivity, onStopwatch, show
               </span>
             </button>
 
-            {/* Planificación - NUEVO */}
+            {/* Revisitas */}
             <button
               onClick={() => {
                 setShowMenu(false);
-                onViewChange('planning');
+                onViewChange('returnVisits');
               }}
               className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all duration-200 active:scale-95 ${
-                currentView === 'planning'
+                currentView === 'returnVisits'
                   ? 'bg-blue-50'
                   : 'hover:bg-gray-50'
               }`}
             >
               <div className={`p-2.5 rounded-full mb-1 ${
-                currentView === 'planning'
+                currentView === 'returnVisits'
                   ? 'bg-blue-600'
                   : 'bg-gray-200'
               }`}>
-                <Calendar className={`w-6 h-6 ${
-                  currentView === 'planning' ? 'text-white' : 'text-gray-600'
+                <Users className={`w-6 h-6 ${
+                  currentView === 'returnVisits' ? 'text-white' : 'text-gray-600'
                 }`} />
               </div>
               <span className={`text-xs font-semibold ${
-                currentView === 'planning' ? 'text-blue-600' : 'text-gray-600'
+                currentView === 'returnVisits' ? 'text-blue-600' : 'text-gray-600'
               }`}>
-                Plan
+                Revisitas
               </span>
             </button>
 

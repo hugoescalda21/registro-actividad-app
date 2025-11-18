@@ -5,6 +5,7 @@ import StatsView from './components/StatsView';
 import RegisterView from './components/RegisterView';
 import HistoryView from './components/HistoryView';
 import PlanningView from './components/PlanningView';
+import ReturnVisitsView from './components/ReturnVisitsView';
 import SettingsModal from './components/SettingsModal';
 import StopwatchWidget from './components/StopwatchWidget';
 import FloatingActionButton from './components/FloatingActionButton';
@@ -285,6 +286,10 @@ function App() {
               activities={activities}
               config={publisherTypes[publisherType]}
             />
+          )}
+
+          {currentView === 'returnVisits' && (
+            <ReturnVisitsView />
           )}
         </div>
       </main>
