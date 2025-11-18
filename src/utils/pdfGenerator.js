@@ -90,7 +90,7 @@ export const generateMonthlyReportPDF = (data) => {
     margin: { left: 20, right: 20 },
   });
 
-  yPos = doc.previousAutoTable.finalY + 15;
+  yPos = doc.lastAutoTable.finalY + 15;
 
   if (yPos > pageHeight - 60) {
     doc.addPage();
