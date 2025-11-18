@@ -68,12 +68,25 @@ export const showAndroidNotification = async (title, options = {}) => {
 
 // Actualizar notificación del cronómetro específicamente
 export const updateAndroidStopwatchNotification = async (time, isRunning, isPaused) => {
-  if (!('serviceWorker' in navigator)) return;
-  if (Notification.permission !== 'granted') return;
+  console.log('[Android] 🔔 Intentando actualizar notificación del cronómetro...');
+  console.log('[Android] Estado:', { time, isRunning, isPaused });
+  console.log('[Android] Service Worker disponible:', 'serviceWorker' in navigator);
+  console.log('[Android] Permiso de notificación:', Notification.permission);
+
+  if (!('serviceWorker' in navigator)) {
+    console.error('[Android] ❌ Service Worker no disponible');
+    return;
+  }
+
+  if (Notification.permission !== 'granted') {
+    console.error('[Android] ❌ Permiso de notificación no otorgado:', Notification.permission);
+    return;
+  }
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    console.log('[Android] Actualizando notificación del cronómetro...', { time, isRunning, isPaused });
+    console.log('[Android] ✅ Service Worker listo:', registration);
+    console.log('[Android] SW activo:', registration.active !== null);
 
     // Cerrar notificación anterior
     const notifications = await registration.getNotifications({ tag: 'stopwatch-notification' });
@@ -96,47 +109,63 @@ export const updateAndroidStopwatchNotification = async (time, isRunning, isPaus
     // Estado
     const status = isPaused ? '⏸️ Pausado' : '⏱️ En curso';
 
-    // Crear acciones
-    const actions = [];
-
-    if (isPaused) {
-      actions.push({
-        action: 'resume',
-        title: '▶️ Reanudar'
-      });
-    } else {
-      actions.push({
-        action: 'pause',
-        title: '⏸️ Pausar'
-      });
-    }
-
-    actions.push({
-      action: 'save',
-      title: '💾 Guardar'
-    });
-
-    actions.push({
-      action: 'stop',
-      title: '⏹️ Detener'
-    });
-
-    // Mostrar notificación
-    await registration.showNotification('⏱️ Cronómetro', {
+    // Crear opciones de notificación
+    const notificationOptions = {
       body: `${timeStr} (${hoursDecimal}h)\n${status}`,
       icon: '/registro-actividad-app/icon-192.png',
       badge: '/registro-actividad-app/icon-192.png',
       tag: 'stopwatch-notification',
-      requireInteraction: true,
+      requireInteraction: false, // Cambiado a false para mayor compatibilidad
       silent: true,
       vibrate: [],
-      actions: actions,
       data: { time, isRunning, isPaused }
-    });
+    };
 
-    console.log('[Android] ✅ Notificación de cronómetro mostrada exitosamente');
+    // Detectar si soporta acciones (no todos los navegadores Android lo hacen)
+    const supportsActions = 'maxActions' in Notification.prototype && Notification.prototype.maxActions > 0;
+    console.log('[Android] Soporta acciones de notificación:', supportsActions);
+
+    if (supportsActions) {
+      // Crear acciones solo si están soportadas
+      const actions = [];
+
+      if (isPaused) {
+        actions.push({
+          action: 'resume',
+          title: '▶️ Reanudar'
+        });
+      } else {
+        actions.push({
+          action: 'pause',
+          title: '⏸️ Pausar'
+        });
+      }
+
+      actions.push({
+        action: 'save',
+        title: '💾 Guardar'
+      });
+
+      actions.push({
+        action: 'stop',
+        title: '⏹️ Detener'
+      });
+
+      notificationOptions.actions = actions;
+      console.log('[Android] Acciones agregadas:', actions.length);
+    } else {
+      console.log('[Android] ⚠️ Acciones no soportadas, notificación básica');
+    }
+
+    console.log('[Android] Opciones de notificación:', notificationOptions);
+
+    // Mostrar notificación
+    await registration.showNotification('⏱️ Cronómetro', notificationOptions);
+
+    console.log('[Android] ✅✅✅ Notificación de cronómetro mostrada exitosamente');
   } catch (error) {
-    console.error('[Android] ❌ Error al actualizar notificación:', error);
+    console.error('[Android] ❌❌❌ Error al actualizar notificación:', error);
+    console.error('[Android] Error stack:', error.stack);
   }
 };
 
