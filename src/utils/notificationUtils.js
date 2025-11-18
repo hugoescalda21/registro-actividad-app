@@ -35,10 +35,15 @@ const isAndroid = () => {
 
 // Enviar notificación del sistema
 export const sendNotification = async (title, options = {}) => {
+  console.log('[sendNotification] Iniciando...', title);
+
   if (!hasNotificationPermission()) {
-    console.warn('No hay permiso para notificaciones');
+    console.warn('[sendNotification] No hay permiso para notificaciones');
+    alert('⚠️ No tienes permiso para notificaciones. Por favor, actívalas en tu navegador.');
     return null;
   }
+
+  console.log('[sendNotification] Permiso confirmado');
 
   const defaultOptions = {
     icon: '/icon-192.png',
@@ -48,30 +53,45 @@ export const sendNotification = async (title, options = {}) => {
     ...options
   };
 
+  console.log('[sendNotification] Opciones:', defaultOptions);
+
   try {
     // En Android o cuando hay Service Worker, usar registration.showNotification
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // Enviar mensaje al Service Worker para mostrar la notificación
-      navigator.serviceWorker.controller.postMessage({
-        type: 'SHOW_NOTIFICATION',
-        title,
-        options: defaultOptions
-      });
-      return { success: true };
-    } else {
-      // Fallback para navegadores de escritorio
-      const notification = new Notification(title, defaultOptions);
+    if ('serviceWorker' in navigator) {
+      console.log('[sendNotification] Service Worker disponible');
 
-      // Click en notificación: enfocar la app
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
+      // Esperar a que el Service Worker esté listo
+      const registration = await navigator.serviceWorker.ready;
+      console.log('[sendNotification] Service Worker ready:', registration);
 
-      return notification;
+      if (registration && registration.active) {
+        console.log('[sendNotification] Service Worker activo, usando registration.showNotification');
+
+        // Enviar directamente desde el registro
+        await registration.showNotification(title, defaultOptions);
+
+        console.log('[sendNotification] ✅ Notificación enviada exitosamente vía Service Worker');
+        return { success: true, method: 'service-worker' };
+      } else {
+        console.log('[sendNotification] Service Worker no está activo, usando fallback');
+      }
     }
+
+    // Fallback para navegadores sin Service Worker
+    console.log('[sendNotification] Usando new Notification() como fallback');
+    const notification = new Notification(title, defaultOptions);
+
+    // Click en notificación: enfocar la app
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+
+    console.log('[sendNotification] ✅ Notificación enviada vía new Notification()');
+    return { success: true, method: 'notification-api' };
   } catch (error) {
-    console.error('Error al enviar notificación:', error);
+    console.error('[sendNotification] ❌ Error al enviar notificación:', error);
+    alert(`Error al enviar notificación: ${error.message}`);
     return null;
   }
 };
