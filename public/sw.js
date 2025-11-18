@@ -1,10 +1,11 @@
-const CACHE_NAME = 'registro-actividad-v2.8';
+const CACHE_NAME = 'registro-actividad-v2.8.1';
+const BASE_URL = '/registro-actividad-app';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  `${BASE_URL}/`,
+  `${BASE_URL}/index.html`,
+  `${BASE_URL}/manifest.json`,
+  `${BASE_URL}/icon-192.png`,
+  `${BASE_URL}/icon-512.png`
 ];
 
 // Instalación del Service Worker
@@ -120,8 +121,8 @@ self.addEventListener('message', (event) => {
 // Mostrar notificación general
 function showGeneralNotification(title, options = {}) {
   const defaultOptions = {
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: `${BASE_URL}/icon-192.png`,
+    badge: `${BASE_URL}/icon-192.png`,
     vibrate: options.vibrate || [200, 100, 200],
     requireInteraction: options.requireInteraction || false,
     silent: options.silent || false,
@@ -147,32 +148,32 @@ function showStopwatchNotification(time, isRunning, isPaused) {
     actions.push({
       action: 'resume',
       title: '▶️ Reanudar',
-      icon: '/icon-192.png'
+      icon: `${BASE_URL}/icon-192.png`
     });
   } else {
     actions.push({
       action: 'pause',
       title: '⏸️ Pausar',
-      icon: '/icon-192.png'
+      icon: `${BASE_URL}/icon-192.png`
     });
   }
 
   actions.push({
     action: 'save',
     title: '💾 Guardar',
-    icon: '/icon-192.png'
+    icon: `${BASE_URL}/icon-192.png`
   });
 
   actions.push({
     action: 'stop',
     title: '⏹️ Detener',
-    icon: '/icon-192.png'
+    icon: `${BASE_URL}/icon-192.png`
   });
 
   const options = {
     body: `${timeStr} (${hoursDecimal}h)\n${status}`,
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: `${BASE_URL}/icon-192.png`,
+    badge: `${BASE_URL}/icon-192.png`,
     tag: 'stopwatch-notification',
     requireInteraction: true,
     silent: true,
@@ -223,7 +224,7 @@ self.addEventListener('notificationclick', (event) => {
             }
           }
           if (clients.openWindow) {
-            return clients.openWindow('/');
+            return clients.openWindow(`${BASE_URL}/`);
           }
         })
     );
@@ -240,7 +241,7 @@ self.addEventListener('notificationclick', (event) => {
             clientList[0].postMessage({ type: 'PAUSE_STOPWATCH' });
             return clientList[0].focus();
           }
-          return clients.openWindow('/registro-actividad-app/');
+          return clients.openWindow(`${BASE_URL}/`);
         })
     );
   } else if (event.action === 'resume') {
@@ -252,7 +253,7 @@ self.addEventListener('notificationclick', (event) => {
             clientList[0].postMessage({ type: 'RESUME_STOPWATCH' });
             return clientList[0].focus();
           }
-          return clients.openWindow('/registro-actividad-app/');
+          return clients.openWindow(`${BASE_URL}/`);
         })
     );
   } else if (event.action === 'save') {
@@ -264,7 +265,7 @@ self.addEventListener('notificationclick', (event) => {
             clientList[0].postMessage({ type: 'SAVE_STOPWATCH' });
             return clientList[0].focus();
           }
-          return clients.openWindow('/registro-actividad-app/');
+          return clients.openWindow(`${BASE_URL}/`);
         })
     );
   } else if (event.action === 'stop') {
@@ -276,7 +277,7 @@ self.addEventListener('notificationclick', (event) => {
             clientList[0].postMessage({ type: 'STOP_STOPWATCH' });
             return clientList[0].focus();
           }
-          return clients.openWindow('/registro-actividad-app/');
+          return clients.openWindow(`${BASE_URL}/`);
         })
     );
   } else {
@@ -290,7 +291,7 @@ self.addEventListener('notificationclick', (event) => {
             }
           }
           if (clients.openWindow) {
-            return clients.openWindow('/registro-actividad-app/');
+            return clients.openWindow(`${BASE_URL}/`);
           }
         })
     );

@@ -46,8 +46,8 @@ export const sendNotification = async (title, options = {}) => {
   console.log('[sendNotification] Permiso confirmado');
 
   const defaultOptions = {
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/registro-actividad-app/icon-192.png',
+    badge: '/registro-actividad-app/icon-192.png',
     vibrate: [200, 100, 200],
     requireInteraction: false,
     ...options
