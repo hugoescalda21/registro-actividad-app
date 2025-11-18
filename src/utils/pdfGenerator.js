@@ -56,18 +56,18 @@ export const generateMonthlyReportPDF = (data) => {
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text('📊 Resumen del Mes', 20, yPos);
+  doc.text('RESUMEN DEL MES', 20, yPos);
   yPos += 12;
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
 
   const summaryData = [
-    ['⏱️ Horas Totales', `${stats.totalHours.toFixed(1)} h`, config.hours > 0 ? `Meta: ${config.hours} h` : 'Sin meta'],
-    ['📖 Horas de Predicación', `${stats.preachingHours.toFixed(1)} h`, ''],
-    ['✅ Horas Aprobadas', `${stats.approvedHours.toFixed(1)} h`, ''],
-    ['📚 Publicaciones', stats.totalPlacements, config.placements > 0 ? `Meta: ${config.placements}` : ''],
-    ['🎬 Videos', stats.totalVideos, config.videos > 0 ? `Meta: ${config.videos}` : ''],
-    ['🏠 Revisitas', stats.totalReturnVisits, config.returnVisits > 0 ? `Meta: ${config.returnVisits}` : ''],
-    ['🎓 Estudios Bíblicos', stats.totalStudies, config.studies > 0 ? `Meta: ${config.studies}` : ''],
+    ['Horas Totales', `${stats.totalHours.toFixed(1)} h`, config.hours > 0 ? `Meta: ${config.hours} h` : 'Sin meta'],
+    ['Horas de Predicacion', `${stats.preachingHours.toFixed(1)} h`, ''],
+    ['Horas Aprobadas', `${stats.approvedHours.toFixed(1)} h`, ''],
+    ['Publicaciones', stats.totalPlacements, config.placements > 0 ? `Meta: ${config.placements}` : ''],
+    ['Videos', stats.totalVideos, config.videos > 0 ? `Meta: ${config.videos}` : ''],
+    ['Revisitas', stats.totalReturnVisits, config.returnVisits > 0 ? `Meta: ${config.returnVisits}` : ''],
+    ['Estudios Biblicos', stats.totalStudies, config.studies > 0 ? `Meta: ${config.studies}` : ''],
   ];
 
   autoTable(doc, {
@@ -107,7 +107,7 @@ export const generateMonthlyReportPDF = (data) => {
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.text('🎯 Cumplimiento de Meta', 20, yPos);
+    doc.text('CUMPLIMIENTO DE META', 20, yPos);
     yPos += 12;
 
     const barWidth = pageWidth - 40;
@@ -131,11 +131,11 @@ export const generateMonthlyReportPDF = (data) => {
     doc.setFont('helvetica', 'normal');
     if (metGoal) {
       doc.setTextColor(16, 185, 129);
-      doc.text(`✅ ¡Felicidades! Has cumplido tu meta mensual de ${config.hours} horas.`, 20, yPos);
+      doc.text(`Felicidades! Has cumplido tu meta mensual de ${config.hours} horas.`, 20, yPos);
     } else {
       doc.setTextColor(249, 115, 22);
       const remaining = (config.hours - stats.totalHours).toFixed(1);
-      doc.text(`⚠️ Faltan ${remaining} horas para cumplir tu meta de ${config.hours} horas.`, 20, yPos);
+      doc.text(`Faltan ${remaining} horas para cumplir tu meta de ${config.hours} horas.`, 20, yPos);
     }
     yPos += 15;
   }
@@ -151,7 +151,7 @@ export const generateMonthlyReportPDF = (data) => {
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text('📋 Detalle de Actividades', 20, yPos);
+  doc.text('DETALLE DE ACTIVIDADES', 20, yPos);
   yPos += 12;
 
   const activityRows = activities
