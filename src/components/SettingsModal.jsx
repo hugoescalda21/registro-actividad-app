@@ -356,7 +356,7 @@ ${config.emoji} ${config.label}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border-2 border-gray-200 dark:border-gray-600">
                 <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-2">Información</h3>
                 <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                  <p><strong>Versión:</strong> 2.7</p>
+                  <p><strong>Versión:</strong> 2.8</p>
                   <p><strong>Actividades registradas:</strong> {activities.length}</p>
                   <p><strong>Tipo actual:</strong> {publisherTypes[publisherType].label}</p>
                 </div>
