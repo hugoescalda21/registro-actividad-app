@@ -61,21 +61,16 @@ const SettingsModal = ({
 
   const handleExportPDF = () => {
     try {
-      console.log('=== INICIANDO EXPORTACIÓN PDF ===');
       const now = new Date();
       const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
-      console.log('Mes actual:', currentMonth, 'Año:', currentYear);
 
       const monthActivities = activities.filter(act => {
         const actDate = new Date(act.date);
         return actDate.getMonth() + 1 === currentMonth && actDate.getFullYear() === currentYear;
       });
-      console.log('Actividades del mes:', monthActivities.length);
-      console.log('Total actividades:', activities.length);
 
       const config = publisherTypes[publisherType];
-      console.log('Config:', config);
 
       // Calculate stats
       const stats = {
@@ -87,13 +82,10 @@ const SettingsModal = ({
         totalReturnVisits: monthActivities.reduce((sum, act) => sum + (act.returnVisits || 0), 0),
         totalStudies: monthActivities.reduce((sum, act) => sum + (act.studies || 0), 0),
       };
-      console.log('Stats calculadas:', stats);
 
       const publisherTypeName = config.label;
-      console.log('Tipo de publicador:', publisherTypeName);
 
-      console.log('Llamando a generateMonthlyReportPDF...');
-      const result = generateMonthlyReportPDF({
+      generateMonthlyReportPDF({
         activities: monthActivities,
         stats,
         config,
@@ -101,15 +93,9 @@ const SettingsModal = ({
         month: currentMonth,
         year: currentYear
       });
-      console.log('PDF generado:', result);
-      console.log('=== EXPORTACIÓN PDF COMPLETADA ===');
     } catch (error) {
-      console.error('=== ERROR AL GENERAR PDF ===');
-      console.error('Tipo de error:', error.name);
-      console.error('Mensaje:', error.message);
-      console.error('Stack:', error.stack);
-      console.error('Error completo:', error);
-      alert('Error al generar el PDF. Por favor, inténtalo de nuevo. Error: ' + error.message);
+      console.error('Error al generar PDF:', error);
+      alert('Error al generar el PDF. Por favor, inténtalo de nuevo.');
     }
   };
 
