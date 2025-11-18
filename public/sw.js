@@ -1,4 +1,4 @@
-const CACHE_NAME = 'registro-actividad-v2.4';
+const CACHE_NAME = 'registro-actividad-v2.8';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -93,6 +93,12 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 
+  // Mostrar notificación general desde la app
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, options } = event.data;
+    showGeneralNotification(title, options);
+  }
+
   // Actualizar notificación del cronómetro
   if (event.data && event.data.type === 'UPDATE_STOPWATCH_NOTIFICATION') {
     const { time, isRunning, isPaused } = event.data;
@@ -110,6 +116,20 @@ self.addEventListener('message', (event) => {
     hideStopwatchNotification();
   }
 });
+
+// Mostrar notificación general
+function showGeneralNotification(title, options = {}) {
+  const defaultOptions = {
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: options.vibrate || [200, 100, 200],
+    requireInteraction: options.requireInteraction || false,
+    silent: options.silent || false,
+    ...options
+  };
+
+  self.registration.showNotification(title, defaultOptions);
+}
 
 // Mostrar notificación persistente del cronómetro
 function showStopwatchNotification(time, isRunning, isPaused) {
@@ -188,10 +208,29 @@ function hideStopwatchNotification() {
 
 // Manejar clics en las acciones de la notificación
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notificación clickeada:', event.action);
-  
+  console.log('[SW] Notificación clickeada:', event.action, 'Tag:', event.notification.tag);
+
   event.notification.close();
 
+  // Para notificaciones generales, simplemente abrir/enfocar la app
+  if (!event.action && event.notification.tag !== 'stopwatch-notification') {
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          for (const client of clientList) {
+            if (client.url.includes('registro-actividad-app') && 'focus' in client) {
+              return client.focus();
+            }
+          }
+          if (clients.openWindow) {
+            return clients.openWindow('/');
+          }
+        })
+    );
+    return;
+  }
+
+  // Manejo de acciones del cronómetro
   if (event.action === 'pause') {
     // Pausar cronómetro
     event.waitUntil(

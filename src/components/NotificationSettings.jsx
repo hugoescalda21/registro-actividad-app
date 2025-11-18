@@ -37,11 +37,25 @@ const NotificationSettings = ({ onClose }) => {
     saveNotificationSettings(newSettings);
   };
 
-  const handleTestNotification = () => {
-    sendNotification('🧪 Notificación de Prueba', {
+  const handleTestNotification = async () => {
+    console.log('[NotificationTest] Iniciando prueba de notificación...');
+    console.log('[NotificationTest] Service Worker disponible:', 'serviceWorker' in navigator);
+    console.log('[NotificationTest] Service Worker controlado:', navigator.serviceWorker?.controller);
+    console.log('[NotificationTest] Permiso actual:', Notification.permission);
+
+    const result = await sendNotification('🧪 Notificación de Prueba', {
       body: 'Así se verán tus notificaciones',
-      tag: 'test'
+      tag: 'test',
+      requireInteraction: false
     });
+
+    console.log('[NotificationTest] Resultado:', result);
+
+    if (result?.success) {
+      console.log('[NotificationTest] ✅ Notificación enviada a través del Service Worker');
+    } else {
+      console.log('[NotificationTest] ℹ️ Notificación enviada directamente');
+    }
   };
 
   const handleAddCustomReminder = () => {

@@ -28,8 +28,13 @@ export const hasNotificationPermission = () => {
   return Notification.permission === 'granted';
 };
 
+// Detectar si está en Android
+const isAndroid = () => {
+  return /Android/i.test(navigator.userAgent);
+};
+
 // Enviar notificación del sistema
-export const sendNotification = (title, options = {}) => {
+export const sendNotification = async (title, options = {}) => {
   if (!hasNotificationPermission()) {
     console.warn('No hay permiso para notificaciones');
     return null;
@@ -44,15 +49,27 @@ export const sendNotification = (title, options = {}) => {
   };
 
   try {
-    const notification = new Notification(title, defaultOptions);
-    
-    // Click en notificación: enfocar la app
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
+    // En Android o cuando hay Service Worker, usar registration.showNotification
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      // Enviar mensaje al Service Worker para mostrar la notificación
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title,
+        options: defaultOptions
+      });
+      return { success: true };
+    } else {
+      // Fallback para navegadores de escritorio
+      const notification = new Notification(title, defaultOptions);
 
-    return notification;
+      // Click en notificación: enfocar la app
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      return notification;
+    }
   } catch (error) {
     console.error('Error al enviar notificación:', error);
     return null;
