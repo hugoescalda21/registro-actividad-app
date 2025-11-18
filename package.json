@@ -1,7 +1,7 @@
 {
   "name": "registro-actividad-app",
   "private": true,
-  "version": "2.8.0",
+  "version": "2.9.0",
   "type": "module",
   "homepage": "https://hugoescalda21.github.io/registro-actividad-app",
   "scripts": {
