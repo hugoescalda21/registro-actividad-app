@@ -4,16 +4,18 @@ import Stopwatch from './Stopwatch';
 import LoadingSpinner from './LoadingSpinner';
 import DailyGoalCard from './DailyGoalCard';
 import { formatDateWithWeekday } from '../utils/dateUtils';
+import { useModal } from '../contexts/ModalContext';
 
-const RegisterView = ({ 
-  onSave, 
+const RegisterView = ({
+  onSave,
   onUpdate,
-  config, 
-  activities, 
-  triggerFormOpen, 
+  config,
+  activities,
+  triggerFormOpen,
   triggerStopwatchOpen,
   editingActivity
 }) => {
+  const modal = useModal();
   const [showForm, setShowForm] = useState(false);
   const [showStopwatch, setShowStopwatch] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -69,9 +71,9 @@ const RegisterView = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (config.canLogHours && (!formData.hours || parseFloat(formData.hours) === 0)) {
-      alert('Debes ingresar las horas de predicación');
+      await modal.warning('Debes ingresar las horas de predicación', 'Campo requerido');
       return;
     }
 

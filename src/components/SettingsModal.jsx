@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { X, User, Download, Upload, Share2, Bell } from 'lucide-react';
 import NotificationSettings from './NotificationSettings';
+import { useModal } from '../contexts/ModalContext';
 
-const SettingsModal = ({ 
-  isOpen, 
-  onClose, 
-  publisherType, 
-  onPublisherTypeChange, 
+const SettingsModal = ({
+  isOpen,
+  onClose,
+  publisherType,
+  onPublisherTypeChange,
   publisherTypes,
   activities,
-  onImport 
+  onImport
 }) => {
   const [activeTab, setActiveTab] = useState('general');
+  const modal = useModal();
 
   if (!isOpen) return null;
 
@@ -32,25 +34,32 @@ const SettingsModal = ({
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = (event) => {
+  const handleImport = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        
+
         if (data.activities && data.publisherType) {
-          if (window.confirm('¿Deseas importar estos datos? Los datos actuales se reemplazarán.')) {
+          const confirmed = await modal.confirm(
+            '¿Deseas importar estos datos? Los datos actuales se reemplazarán.',
+            'Confirmar importación'
+          );
+          if (confirmed) {
             onImport(data.activities, data.publisherType);
           }
         } else {
-          alert('Archivo de respaldo inválido');
+          await modal.error('Archivo de respaldo inválido', 'Error de importación');
         }
       } catch (error) {
         console.error('Error al importar:', error);
-        alert('Error al leer el archivo. Verifica que sea un respaldo válido.');
+        await modal.error(
+          'Error al leer el archivo. Verifica que sea un respaldo válido.',
+          'Error de importación'
+        );
       }
     };
     reader.readAsText(file);

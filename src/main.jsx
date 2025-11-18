@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 import { ToastProvider } from './contexts/ToastContext';
+import { ModalProvider } from './contexts/ModalContext';
+import { PublisherProvider } from './contexts/PublisherContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Registrar Service Worker con configuración para Android
 if ('serviceWorker' in navigator) {
@@ -53,8 +56,14 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ToastProvider>
-      <App />
-    </ToastProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <ModalProvider>
+          <PublisherProvider>
+            <App />
+          </PublisherProvider>
+        </ModalProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 );

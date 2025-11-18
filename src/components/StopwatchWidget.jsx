@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Timer, Maximize2, Play, Pause, Square, Save, RotateCcw, ChevronUp, ChevronDown, Move } from 'lucide-react';
+import { useModal } from '../contexts/ModalContext';
 
 const StopwatchWidget = ({ onOpen }) => {
+  const modal = useModal();
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -188,22 +190,30 @@ const StopwatchWidget = ({ onOpen }) => {
     setIsPaused(false);
   };
 
-  const handleStop = () => {
-    if (window.confirm('¿Detener el cronómetro? El tiempo no se guardará.')) {
+  const handleStop = async () => {
+    const confirmed = await modal.confirm(
+      '¿Detener el cronómetro? El tiempo no se guardará.',
+      'Detener cronómetro'
+    );
+    if (confirmed) {
       localStorage.removeItem('stopwatchState');
       localStorage.removeItem('stopwatchSavedTime');
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (time === 0) {
-      alert('No hay tiempo para guardar');
+      await modal.warning('No hay tiempo para guardar', 'Cronómetro vacío');
       return;
     }
-    
+
     const hours = time / 3600;
-    
-    if (window.confirm(`¿Guardar ${hours.toFixed(2)} horas como actividad?`)) {
+
+    const confirmed = await modal.confirm(
+      `¿Guardar ${hours.toFixed(2)} horas como actividad?`,
+      'Guardar actividad'
+    );
+    if (confirmed) {
       const activity = {
         id: Date.now(),
         date: new Date().toISOString().split('T')[0],
@@ -235,8 +245,12 @@ const StopwatchWidget = ({ onOpen }) => {
     }
   };
 
-  const handleReset = () => {
-    if (window.confirm('¿Reiniciar el cronómetro? Se perderá el tiempo actual.')) {
+  const handleReset = async () => {
+    const confirmed = await modal.confirm(
+      '¿Reiniciar el cronómetro? Se perderá el tiempo actual.',
+      'Reiniciar cronómetro'
+    );
+    if (confirmed) {
       localStorage.removeItem('stopwatchState');
       localStorage.removeItem('stopwatchSavedTime');
     }
