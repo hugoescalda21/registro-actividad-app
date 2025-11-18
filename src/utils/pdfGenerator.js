@@ -70,7 +70,7 @@ export const generateMonthlyReportPDF = (data) => {
     ['🎓 Estudios Bíblicos', stats.totalStudies, config.studies > 0 ? `Meta: ${config.studies}` : ''],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: yPos,
     head: [['Concepto', 'Total', 'Observaciones']],
     body: summaryData,
@@ -90,7 +90,7 @@ export const generateMonthlyReportPDF = (data) => {
     margin: { left: 20, right: 20 },
   });
 
-  yPos = doc.lastAutoTable.finalY + 15;
+  yPos = doc.previousAutoTable.finalY + 15;
 
   if (yPos > pageHeight - 60) {
     doc.addPage();
@@ -175,7 +175,7 @@ export const generateMonthlyReportPDF = (data) => {
     });
 
   if (activityRows.length > 0) {
-    doc.autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [['Fecha', 'Horas', 'Pub.', 'Videos', 'Rev.', 'Est.', 'Notas']],
       body: activityRows,
