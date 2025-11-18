@@ -187,6 +187,7 @@ export const loadNotificationSettings = () => {
     enabled: false,
     dailyReminder: false,
     dailyReminderTime: '20:00',
+    customReminders: [], // Array de { id, time, label, enabled }
     goalAlerts: true,
     streakAlerts: true,
     achievementAlerts: true,

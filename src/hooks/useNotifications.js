@@ -19,6 +19,48 @@ export const useNotifications = (activities, stats, config) => {
     checkAchievements();
   }, [activities.length, settings.enabled]);
 
+  // Verificar inactividad (cada hora)
+  useEffect(() => {
+    if (!settings.enabled || !hasNotificationPermission()) return;
+
+    const checkInactivity = () => {
+      if (activities.length === 0) return;
+
+      const sortedActivities = [...activities].sort(
+        (a, b) => b.date.localeCompare(a.date)
+      );
+      const lastActivity = new Date(sortedActivities[0].date);
+      const now = new Date();
+      const daysSinceLastActivity = Math.floor(
+        (now - lastActivity) / (1000 * 60 * 60 * 24)
+      );
+
+      const lastInactivityAlert = localStorage.getItem('lastInactivityAlert');
+      const lastActivityDate = sortedActivities[0].date;
+
+      // Recordatorio después de 3 días sin actividad (solo una vez por período)
+      if (
+        daysSinceLastActivity >= 3 &&
+        lastInactivityAlert !== lastActivityDate
+      ) {
+        sendNotification('🤔 Te Extrañamos', {
+          body: `Hace ${daysSinceLastActivity} días que no registras actividad. ¿Todo bien?`,
+          tag: 'inactivity-reminder',
+          requireInteraction: true
+        });
+        localStorage.setItem('lastInactivityAlert', lastActivityDate);
+      }
+    };
+
+    // Verificar inmediatamente
+    checkInactivity();
+
+    // Verificar cada hora
+    const intervalId = setInterval(checkInactivity, 60 * 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [activities, settings.enabled]);
+
   // Verificar progreso de meta
   useEffect(() => {
     if (!settings.enabled || !settings.goalAlerts || !hasNotificationPermission()) return;
@@ -59,6 +101,23 @@ export const useNotifications = (activities, stats, config) => {
     };
   }, [settings.enabled, settings.weeklyReport, settings.weeklyReportDay]);
 
+  // Programar recordatorios personalizados
+  useEffect(() => {
+    if (!settings.enabled || !hasNotificationPermission()) return;
+    if (!settings.customReminders || settings.customReminders.length === 0) return;
+
+    const activeReminders = settings.customReminders.filter(r => r.enabled);
+
+    activeReminders.forEach(reminder => {
+      scheduleCustomReminder(reminder);
+    });
+
+    return () => {
+      scheduledRemindersRef.current.forEach(id => clearTimeout(id));
+      scheduledRemindersRef.current = [];
+    };
+  }, [settings.enabled, settings.customReminders]);
+
   // Verificar logros
   const checkAchievements = useCallback(() => {
     if (!settings.achievementAlerts) return;
@@ -66,35 +125,26 @@ export const useNotifications = (activities, stats, config) => {
     const count = activities.length;
     const lastCount = parseInt(localStorage.getItem('lastActivityCount') || '0');
 
-    // Primera actividad
-    if (count === 1 && lastCount === 0) {
-      const { title, options } = NotificationTemplates.firstActivity();
-      sendNotification(title, options);
-    }
+    const achievements = [
+      { count: 1, title: '🎊 ¡Primera Actividad!', body: 'Has dado el primer paso. ¡Sigue así!', tag: 'first-activity' },
+      { count: 10, title: '🏆 ¡10 Actividades!', body: 'Has registrado 10 actividades. ¡Excelente constancia!', tag: 'ten-activities' },
+      { count: 25, title: '🌟 ¡25 Actividades!', body: '¡Vas por muy buen camino! Sigue así.', tag: 'twenty-five-activities' },
+      { count: 50, title: '🎉 ¡50 Actividades!', body: '¡Increíble constancia! Has registrado 50 actividades.', tag: 'fifty-activities' },
+      { count: 100, title: '💎 ¡100 Actividades!', body: '¡Felicitaciones! Has alcanzado un hito importante.', tag: 'hundred-activities' },
+      { count: 250, title: '🌠 ¡250 Actividades!', body: '¡Asombroso! Tu dedicación es inspiradora.', tag: 'two-fifty-activities' },
+      { count: 500, title: '⭐ ¡500 Actividades!', body: '¡Wow! Has demostrado una constancia excepcional.', tag: 'five-hundred-activities' },
+      { count: 1000, title: '👑 ¡1000 Actividades!', body: '¡Legendario! Has alcanzado el máximo nivel.', tag: 'thousand-activities' }
+    ];
 
-    // 10 actividades
-    if (count === 10 && lastCount < 10) {
-      const { title, options } = NotificationTemplates.tenActivities();
-      sendNotification(title, options);
-    }
-
-    // 50 actividades
-    if (count === 50 && lastCount < 50) {
-      sendNotification('🎉 ¡50 Actividades!', {
-        body: '¡Increíble constancia! Has registrado 50 actividades.',
-        tag: 'fifty-activities',
-        requireInteraction: true
-      });
-    }
-
-    // 100 actividades
-    if (count === 100 && lastCount < 100) {
-      sendNotification('🏆 ¡100 Actividades!', {
-        body: '¡Felicitaciones! Has alcanzado un hito importante.',
-        tag: 'hundred-activities',
-        requireInteraction: true
-      });
-    }
+    achievements.forEach(achievement => {
+      if (count === achievement.count && lastCount < achievement.count) {
+        sendNotification(achievement.title, {
+          body: achievement.body,
+          tag: achievement.tag,
+          requireInteraction: true
+        });
+      }
+    });
 
     localStorage.setItem('lastActivityCount', count.toString());
   }, [activities.length, settings.achievementAlerts]);
@@ -139,11 +189,11 @@ export const useNotifications = (activities, stats, config) => {
     localStorage.setItem('lastStreak', streak.toString());
   }, [activities]);
 
-  // Programar recordatorio diario
+  // Programar recordatorio diario (con reprogramación automática)
   const scheduleDailyReminder = useCallback(() => {
     const now = new Date();
     const [hours, minutes] = settings.dailyReminderTime.split(':').map(Number);
-    
+
     const scheduledTime = new Date();
     scheduledTime.setHours(hours, minutes, 0, 0);
 
@@ -152,15 +202,26 @@ export const useNotifications = (activities, stats, config) => {
       scheduledTime.setDate(scheduledTime.getDate() + 1);
     }
 
-    const { title, options } = NotificationTemplates.dailyReminder();
-    const timeoutId = scheduleNotification(title, options, scheduledTime);
-    
-    if (timeoutId) {
-      scheduledRemindersRef.current.push(timeoutId);
-    }
-  }, [settings.dailyReminderTime]);
+    const delay = scheduledTime.getTime() - now.getTime();
 
-  // Programar resumen semanal
+    const timeoutId = setTimeout(() => {
+      // Verificar si ya registró actividad hoy
+      const today = new Date().toISOString().split('T')[0];
+      const hasActivityToday = activities.some(act => act.date === today);
+
+      if (!hasActivityToday) {
+        const { title, options } = NotificationTemplates.dailyReminder();
+        sendNotification(title, options);
+      }
+
+      // Reprogramar para mañana
+      setTimeout(() => scheduleDailyReminder(), 1000);
+    }, delay);
+
+    scheduledRemindersRef.current.push(timeoutId);
+  }, [activities, settings.dailyReminderTime]);
+
+  // Programar resumen semanal (con reprogramación automática)
   const scheduleWeeklyReport = useCallback(() => {
     const now = new Date();
     const currentDay = now.getDay();
@@ -175,22 +236,59 @@ export const useNotifications = (activities, stats, config) => {
     scheduledTime.setDate(scheduledTime.getDate() + daysUntilTarget);
     scheduledTime.setHours(20, 0, 0, 0); // 8 PM
 
-    // Calcular estadísticas de la semana
-    const weekActivities = getLastWeekActivities(activities);
-    const totalHours = weekActivities.reduce((sum, act) => sum + (act.hours || 0), 0);
-    const totalStudies = weekActivities.reduce((sum, act) => sum + (act.studies || 0), 0);
+    const delay = scheduledTime.getTime() - now.getTime();
 
-    const { title, options } = NotificationTemplates.weeklyReport(
-      totalHours.toFixed(1), 
-      totalStudies
-    );
-    
-    const timeoutId = scheduleNotification(title, options, scheduledTime);
-    
-    if (timeoutId) {
-      scheduledRemindersRef.current.push(timeoutId);
-    }
+    const timeoutId = setTimeout(() => {
+      // Calcular estadísticas de la semana
+      const weekActivities = getLastWeekActivities(activities);
+      const totalHours = weekActivities.reduce(
+        (sum, act) => sum + (act.hours || 0) + (act.approvedHours || 0),
+        0
+      );
+      const totalStudies = weekActivities.reduce((sum, act) => sum + (act.studies || 0), 0);
+
+      const { title, options } = NotificationTemplates.weeklyReport(
+        totalHours.toFixed(1),
+        totalStudies
+      );
+
+      sendNotification(title, options);
+
+      // Reprogramar para la próxima semana
+      setTimeout(() => scheduleWeeklyReport(), 1000);
+    }, delay);
+
+    scheduledRemindersRef.current.push(timeoutId);
   }, [activities, settings.weeklyReportDay]);
+
+  // Programar recordatorio personalizado (con reprogramación automática)
+  const scheduleCustomReminder = useCallback((reminder) => {
+    const now = new Date();
+    const [hours, minutes] = reminder.time.split(':').map(Number);
+
+    const scheduledTime = new Date();
+    scheduledTime.setHours(hours, minutes, 0, 0);
+
+    // Si ya pasó la hora hoy, programar para mañana
+    if (scheduledTime <= now) {
+      scheduledTime.setDate(scheduledTime.getDate() + 1);
+    }
+
+    const delay = scheduledTime.getTime() - now.getTime();
+
+    const timeoutId = setTimeout(() => {
+      sendNotification(`⏰ ${reminder.label}`, {
+        body: '¿Ya registraste tu actividad?',
+        tag: `custom-reminder-${reminder.id}`,
+        requireInteraction: false
+      });
+
+      // Reprogramar para mañana
+      setTimeout(() => scheduleCustomReminder(reminder), 1000);
+    }, delay);
+
+    scheduledRemindersRef.current.push(timeoutId);
+  }, []);
 
   // Funciones auxiliares
   const getCurrentMonthKey = () => {

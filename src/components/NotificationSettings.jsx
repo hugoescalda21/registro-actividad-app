@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, BellOff, Clock, Target, Flame, Trophy, Calendar, Volume2, Vibrate, Timer } from 'lucide-react';
+import { Bell, BellOff, Clock, Target, Flame, Trophy, Calendar, Volume2, Vibrate, Timer, Plus, X as XIcon, Edit2 } from 'lucide-react';
 import { isAndroid } from '../utils/androidNotifications';
 import { 
   isNotificationSupported, 
@@ -42,6 +42,29 @@ const NotificationSettings = ({ onClose }) => {
       body: 'Así se verán tus notificaciones',
       tag: 'test'
     });
+  };
+
+  const handleAddCustomReminder = () => {
+    const newReminder = {
+      id: Date.now().toString(),
+      time: '12:00',
+      label: 'Recordatorio',
+      enabled: true
+    };
+    const newReminders = [...(settings.customReminders || []), newReminder];
+    handleSettingChange('customReminders', newReminders);
+  };
+
+  const handleUpdateCustomReminder = (id, updates) => {
+    const newReminders = settings.customReminders.map(r =>
+      r.id === id ? { ...r, ...updates } : r
+    );
+    handleSettingChange('customReminders', newReminders);
+  };
+
+  const handleDeleteCustomReminder = (id) => {
+    const newReminders = settings.customReminders.filter(r => r.id !== id);
+    handleSettingChange('customReminders', newReminders);
   };
 
   {/* Botón de prueba Android */}
@@ -155,7 +178,7 @@ const NotificationSettings = ({ onClose }) => {
                   <Clock className="w-5 h-5 text-blue-600 mt-1" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-bold text-gray-800">Recordatorio Diario</h4>
+                      <h4 className="font-bold text-gray-800 dark:text-gray-100">Recordatorio Diario</h4>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -166,7 +189,7 @@ const NotificationSettings = ({ onClose }) => {
                         <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
                       </label>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                       Recibe un recordatorio para registrar tu actividad
                     </p>
                     {settings.dailyReminder && (
@@ -174,9 +197,95 @@ const NotificationSettings = ({ onClose }) => {
                         type="time"
                         value={settings.dailyReminderTime}
                         onChange={(e) => handleSettingChange('dailyReminderTime', e.target.value)}
-                        className="px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-0"
+                        className="px-3 py-2 border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:border-blue-500 focus:ring-0"
                         style={{ fontSize: '16px' }}
                       />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Recordatorios personalizados */}
+              <div className="card-gradient p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <Bell className="w-5 h-5 text-purple-600 mt-1" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-gray-800 dark:text-gray-100">Recordatorios Personalizados</h4>
+                      <button
+                        onClick={handleAddCustomReminder}
+                        className="p-1 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+                        title="Agregar recordatorio"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      Crea múltiples recordatorios a diferentes horas
+                    </p>
+
+                    {settings.customReminders && settings.customReminders.length > 0 && (
+                      <div className="space-y-2">
+                        {settings.customReminders.map((reminder) => (
+                          <div
+                            key={reminder.id}
+                            className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600"
+                          >
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={reminder.enabled}
+                                onChange={(e) =>
+                                  handleUpdateCustomReminder(reminder.id, {
+                                    enabled: e.target.checked
+                                  })
+                                }
+                                className="sr-only peer"
+                              />
+                              <div className="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                            </label>
+
+                            <input
+                              type="text"
+                              value={reminder.label}
+                              onChange={(e) =>
+                                handleUpdateCustomReminder(reminder.id, {
+                                  label: e.target.value
+                                })
+                              }
+                              className="flex-1 px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded focus:border-purple-500 focus:ring-0"
+                              placeholder="Etiqueta"
+                              style={{ fontSize: '14px' }}
+                            />
+
+                            <input
+                              type="time"
+                              value={reminder.time}
+                              onChange={(e) =>
+                                handleUpdateCustomReminder(reminder.id, {
+                                  time: e.target.value
+                                })
+                              }
+                              className="px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded focus:border-purple-500 focus:ring-0"
+                              style={{ fontSize: '14px' }}
+                            />
+
+                            <button
+                              onClick={() => handleDeleteCustomReminder(reminder.id)}
+                              className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                              title="Eliminar"
+                            >
+                              <XIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {(!settings.customReminders || settings.customReminders.length === 0) && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                        No hay recordatorios personalizados. Haz clic en + para agregar uno.
+                      </p>
                     )}
                   </div>
                 </div>
