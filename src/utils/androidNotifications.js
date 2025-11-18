@@ -73,13 +73,18 @@ export const updateAndroidStopwatchNotification = async (time, isRunning, isPaus
 
   try {
     const registration = await navigator.serviceWorker.ready;
+    console.log('[Android] Actualizando notificación del cronómetro...', { time, isRunning, isPaused });
 
     // Cerrar notificación anterior
-    const notifications = await registration.getNotifications({ tag: 'stopwatch' });
+    const notifications = await registration.getNotifications({ tag: 'stopwatch-notification' });
+    console.log('[Android] Notificaciones anteriores encontradas:', notifications.length);
     notifications.forEach(n => n.close());
 
     // Si no hay cronómetro activo, no mostrar nada
-    if (!isRunning && time === 0) return;
+    if (!isRunning && time === 0) {
+      console.log('[Android] Cronómetro detenido, no mostrar notificación');
+      return;
+    }
 
     // Formatear tiempo
     const hours = Math.floor(time / 3600);
@@ -121,7 +126,7 @@ export const updateAndroidStopwatchNotification = async (time, isRunning, isPaus
       body: `${timeStr} (${hoursDecimal}h)\n${status}`,
       icon: '/registro-actividad-app/icon-192.png',
       badge: '/registro-actividad-app/icon-192.png',
-      tag: 'stopwatch',
+      tag: 'stopwatch-notification',
       requireInteraction: true,
       silent: true,
       vibrate: [],
@@ -129,9 +134,9 @@ export const updateAndroidStopwatchNotification = async (time, isRunning, isPaus
       data: { time, isRunning, isPaused }
     });
 
-    console.log('Notificación de cronómetro actualizada');
+    console.log('[Android] ✅ Notificación de cronómetro mostrada exitosamente');
   } catch (error) {
-    console.error('Error al actualizar notificación:', error);
+    console.error('[Android] ❌ Error al actualizar notificación:', error);
   }
 };
 
@@ -141,10 +146,11 @@ export const hideAndroidStopwatchNotification = async () => {
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    const notifications = await registration.getNotifications({ tag: 'stopwatch' });
+    const notifications = await registration.getNotifications({ tag: 'stopwatch-notification' });
+    console.log('[Android] Cerrando notificaciones del cronómetro:', notifications.length);
     notifications.forEach(n => n.close());
-    console.log('Notificación de cronómetro cerrada');
+    console.log('[Android] ✅ Notificaciones de cronómetro cerradas');
   } catch (error) {
-    console.error('Error al cerrar notificación:', error);
+    console.error('[Android] ❌ Error al cerrar notificación:', error);
   }
 };

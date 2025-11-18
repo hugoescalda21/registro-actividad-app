@@ -11,59 +11,79 @@ export const useStopwatchNotification = (time, isRunning, isPaused) => {
   const lastNotificationTime = useRef(0);
 
   useEffect(() => {
+    console.log('[useStopwatchNotification] Hook ejecutado', { time, isRunning, isPaused });
+
     // Verificar configuración
     const settings = loadNotificationSettings();
+    console.log('[useStopwatchNotification] Settings:', settings);
+
     if (!settings.enabled || !settings.persistentStopwatch) {
+      console.log('[useStopwatchNotification] Notificaciones deshabilitadas o persistentStopwatch deshabilitado');
       return;
     }
 
     // Verificar Service Worker
     if (!('serviceWorker' in navigator)) {
-      console.warn('Service Worker no disponible');
+      console.warn('[useStopwatchNotification] Service Worker no disponible');
       return;
     }
 
     // Verificar permiso
     if (Notification.permission !== 'granted') {
-      console.warn('Sin permiso de notificaciones');
+      console.warn('[useStopwatchNotification] Sin permiso de notificaciones:', Notification.permission);
       return;
     }
+
+    console.log('[useStopwatchNotification] ✅ Todas las validaciones pasadas');
 
     const updateNotification = async () => {
       // Solo actualizar cada 5 segundos
       const now = Date.now();
       if (now - lastNotificationTime.current < 5000) {
+        console.log('[useStopwatchNotification] Esperando cooldown (< 5s)');
         return;
       }
       lastNotificationTime.current = now;
 
+      console.log('[useStopwatchNotification] Actualizando notificación...');
+
       // Usar sistema específico para Android
       if (isAndroid()) {
+        console.log('[useStopwatchNotification] Usando método Android');
         await updateAndroidStopwatchNotification(time, isRunning, isPaused);
       } else {
         // Para desktop/iOS, usar el método anterior
+        console.log('[useStopwatchNotification] Usando método Desktop/iOS');
         if (navigator.serviceWorker.controller) {
+          console.log('[useStopwatchNotification] Service Worker controller disponible, enviando mensaje');
           navigator.serviceWorker.controller.postMessage({
             type: 'UPDATE_STOPWATCH_NOTIFICATION',
             time,
             isRunning,
             isPaused
           });
+        } else {
+          console.warn('[useStopwatchNotification] Service Worker controller no disponible');
         }
       }
     };
 
     if (isRunning || time > 0) {
+      console.log('[useStopwatchNotification] Cronómetro activo, configurando notificaciones');
       // Mostrar notificación inicial
       updateNotification();
 
       // Actualizar cada 5 segundos
       notificationUpdateInterval.current = setInterval(updateNotification, 5000);
+      console.log('[useStopwatchNotification] Intervalo de actualización configurado');
     } else {
+      console.log('[useStopwatchNotification] Cronómetro detenido, ocultando notificación');
       // Ocultar notificación
       if (isAndroid()) {
+        console.log('[useStopwatchNotification] Ocultando notificación (Android)');
         hideAndroidStopwatchNotification();
       } else {
+        console.log('[useStopwatchNotification] Ocultando notificación (Desktop/iOS)');
         if (navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage({
             type: 'HIDE_STOPWATCH_NOTIFICATION'
@@ -73,6 +93,7 @@ export const useStopwatchNotification = (time, isRunning, isPaused) => {
     }
 
     return () => {
+      console.log('[useStopwatchNotification] Limpiando intervalo de actualización');
       if (notificationUpdateInterval.current) {
         clearInterval(notificationUpdateInterval.current);
       }
