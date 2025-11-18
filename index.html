@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/registro-actividad-app/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Aplicación para registrar actividad como publicador" />
+    <meta name="theme-color" content="#2563eb" />
+    <link rel="manifest" href="/registro-actividad-app/manifest.json" />
+    <link rel="apple-touch-icon" href="/registro-actividad-app/icon-192.png" />
+    <title>Registro de Actividad</title>
+    <script type="module" crossorigin src="/registro-actividad-app/assets/index-BVd9IWNB.js"></script>
+    <link rel="stylesheet" crossorigin href="/registro-actividad-app/assets/index-DjZi7XRf.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          const swPath = '/registro-actividad-app/sw.js';
+          navigator.serviceWorker.register(swPath)
+            .then(reg => {
+              console.log('✅ Service Worker registrado exitosamente:', swPath);
+              console.log('[SW] Registration:', reg);
+            })
+            .catch(err => {
+              console.error('❌ Error al registrar Service Worker:', err);
+            });
+        });
+      } else {
+        console.warn('⚠️ Service Worker no está disponible en este navegador');
+      }
+    </script>
+  </body>
+</html>
