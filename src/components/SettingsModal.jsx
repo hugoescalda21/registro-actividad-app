@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, User, Download, Upload, Share2, Bell, Sun, Moon, Monitor } from 'lucide-react';
+import { X, User, Download, Upload, Share2, Bell, Sun, Moon, Monitor, FileText } from 'lucide-react';
 import NotificationSettings from './NotificationSettings';
 import { useThemeContext } from '../contexts/ThemeContext';
+import { generateMonthlyReportPDF } from '../utils/pdfGenerator';
 
 const SettingsModal = ({
   isOpen,
@@ -56,6 +57,46 @@ const SettingsModal = ({
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleExportPDF = () => {
+    try {
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+
+      const monthActivities = activities.filter(act => {
+        const actDate = new Date(act.date);
+        return actDate.getMonth() + 1 === currentMonth && actDate.getFullYear() === currentYear;
+      });
+
+      const config = publisherTypes[publisherType];
+
+      // Calculate stats
+      const stats = {
+        totalHours: monthActivities.reduce((sum, act) => sum + (act.hours || 0) + (act.approvedHours || 0), 0),
+        preachingHours: monthActivities.reduce((sum, act) => sum + (act.hours || 0), 0),
+        approvedHours: monthActivities.reduce((sum, act) => sum + (act.approvedHours || 0), 0),
+        totalPlacements: monthActivities.reduce((sum, act) => sum + (act.placements || 0), 0),
+        totalVideos: monthActivities.reduce((sum, act) => sum + (act.videos || 0), 0),
+        totalReturnVisits: monthActivities.reduce((sum, act) => sum + (act.returnVisits || 0), 0),
+        totalStudies: monthActivities.reduce((sum, act) => sum + (act.studies || 0), 0),
+      };
+
+      const publisherTypeName = config.label;
+
+      generateMonthlyReportPDF({
+        activities: monthActivities,
+        stats,
+        config,
+        publisherTypeName,
+        month: currentMonth,
+        year: currentYear
+      });
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      alert('Error al generar el PDF. Por favor, inténtalo de nuevo.');
+    }
   };
 
   const handleShare = () => {
@@ -275,6 +316,24 @@ ${config.emoji} ${config.label}
                 </p>
               </div>
 
+              {/* Exportar informe PDF */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-red-600" />
+                  Informe en PDF
+                </label>
+                <button
+                  onClick={handleExportPDF}
+                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                >
+                  <FileText className="w-5 h-5" />
+                  📄 Exportar Informe en PDF
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Genera un informe en PDF del mes actual con todas tus actividades
+                </p>
+              </div>
+
               {/* Compartir */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
@@ -297,7 +356,7 @@ ${config.emoji} ${config.label}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border-2 border-gray-200 dark:border-gray-600">
                 <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-2">Información</h3>
                 <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                  <p><strong>Versión:</strong> 2.6</p>
+                  <p><strong>Versión:</strong> 2.7</p>
                   <p><strong>Actividades registradas:</strong> {activities.length}</p>
                   <p><strong>Tipo actual:</strong> {publisherTypes[publisherType].label}</p>
                 </div>
