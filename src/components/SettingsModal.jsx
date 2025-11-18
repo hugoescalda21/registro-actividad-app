@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { X, User, Download, Upload, Share2, Bell } from 'lucide-react';
+import { X, User, Download, Upload, Share2, Bell, Sun, Moon, Monitor } from 'lucide-react';
 import NotificationSettings from './NotificationSettings';
+import { useThemeContext } from '../contexts/ThemeContext';
 
-const SettingsModal = ({ 
-  isOpen, 
-  onClose, 
-  publisherType, 
-  onPublisherTypeChange, 
+const SettingsModal = ({
+  isOpen,
+  onClose,
+  publisherType,
+  onPublisherTypeChange,
   publisherTypes,
   activities,
-  onImport 
+  onImport
 }) => {
   const [activeTab, setActiveTab] = useState('general');
+  const { themeMode, setTheme, THEME_MODES } = useThemeContext();
 
   if (!isOpen) return null;
 
@@ -90,7 +92,7 @@ ${config.emoji} ${config.label}
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
           <div className="flex items-center justify-between">
@@ -108,13 +110,13 @@ ${config.emoji} ${config.label}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-6 pt-4 border-b border-gray-200">
+        <div className="flex gap-1 px-6 pt-4 border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab('general')}
             className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all rounded-t-lg ${
               activeTab === 'general'
-                ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 border-b-2 border-blue-600'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             <User className="w-4 h-4" />
@@ -124,8 +126,8 @@ ${config.emoji} ${config.label}
             onClick={() => setActiveTab('notifications')}
             className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all rounded-t-lg ${
               activeTab === 'notifications'
-                ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 border-b-2 border-blue-600'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             <Bell className="w-4 h-4" />
@@ -137,9 +139,65 @@ ${config.emoji} ${config.label}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
           {activeTab === 'general' && (
             <div className="space-y-6">
+              {/* Tema */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+                  <Sun className="w-5 h-5 text-yellow-600" />
+                  Tema de la Aplicación
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => setTheme(THEME_MODES.LIGHT)}
+                    className={`flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      themeMode === THEME_MODES.LIGHT
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Sun className={`w-6 h-6 ${themeMode === THEME_MODES.LIGHT ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'}`} />
+                    <span className={`text-sm font-semibold ${themeMode === THEME_MODES.LIGHT ? 'text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                      Claro
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setTheme(THEME_MODES.DARK)}
+                    className={`flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      themeMode === THEME_MODES.DARK
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Moon className={`w-6 h-6 ${themeMode === THEME_MODES.DARK ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'}`} />
+                    <span className={`text-sm font-semibold ${themeMode === THEME_MODES.DARK ? 'text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                      Oscuro
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setTheme(THEME_MODES.AUTO)}
+                    className={`flex flex-col items-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                      themeMode === THEME_MODES.AUTO
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Monitor className={`w-6 h-6 ${themeMode === THEME_MODES.AUTO ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'}`} />
+                    <span className={`text-sm font-semibold ${themeMode === THEME_MODES.AUTO ? 'text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                      Auto
+                    </span>
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  {themeMode === THEME_MODES.AUTO
+                    ? 'Se ajusta automáticamente según las preferencias de tu dispositivo'
+                    : `Tema ${themeMode === THEME_MODES.DARK ? 'oscuro' : 'claro'} activado`}
+                </p>
+              </div>
+
               {/* Tipo de publicador */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
                   <User className="w-5 h-5 text-blue-600" />
                   Tipo de Publicador
                 </label>
@@ -149,8 +207,8 @@ ${config.emoji} ${config.label}
                       key={key}
                       className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
                         publisherType === key
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
                       <input
@@ -164,10 +222,10 @@ ${config.emoji} ${config.label}
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-2xl">{type.emoji}</span>
-                          <span className="font-semibold text-gray-800">{type.label}</span>
+                          <span className="font-semibold text-gray-800 dark:text-gray-200">{type.label}</span>
                         </div>
                         {type.hours > 0 && (
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             Meta: {type.hours} horas
                             {type.studies > 0 && `, ${type.studies} estudios`}
                           </p>
@@ -180,7 +238,7 @@ ${config.emoji} ${config.label}
 
               {/* Exportar datos */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
                   <Download className="w-5 h-5 text-green-600" />
                   Respaldo de Datos
                 </label>
@@ -191,14 +249,14 @@ ${config.emoji} ${config.label}
                   <Download className="w-5 h-5" />
                   💾 Exportar Respaldo
                 </button>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   Guarda tus datos en un archivo JSON para respaldo
                 </p>
               </div>
 
               {/* Importar datos */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
                   <Upload className="w-5 h-5 text-blue-600" />
                   Restaurar Datos
                 </label>
@@ -212,14 +270,14 @@ ${config.emoji} ${config.label}
                     className="hidden"
                   />
                 </label>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   Restaura tus datos desde un archivo de respaldo
                 </p>
               </div>
 
               {/* Compartir */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
                   <Share2 className="w-5 h-5 text-purple-600" />
                   Compartir Informe
                 </label>
@@ -230,16 +288,16 @@ ${config.emoji} ${config.label}
                   <Share2 className="w-5 h-5" />
                   💬 Compartir por WhatsApp
                 </button>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   Comparte tu informe del mes actual
                 </p>
               </div>
 
               {/* Info de la app */}
-              <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
-                <h3 className="font-bold text-gray-800 mb-2">Información</h3>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <p><strong>Versión:</strong> 2.3</p>
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border-2 border-gray-200 dark:border-gray-600">
+                <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-2">Información</h3>
+                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                  <p><strong>Versión:</strong> 2.6</p>
                   <p><strong>Actividades registradas:</strong> {activities.length}</p>
                   <p><strong>Tipo actual:</strong> {publisherTypes[publisherType].label}</p>
                 </div>
@@ -253,7 +311,7 @@ ${config.emoji} ${config.label}
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onClose}
             className="w-full btn-primary py-3"

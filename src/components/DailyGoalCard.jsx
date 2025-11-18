@@ -24,21 +24,21 @@ const DailyGoalCard = ({ activities, config, onStartStopwatch }) => {
 
   const getStatusBgColor = () => {
     switch (motivation.color) {
-      case 'green': return 'bg-green-50 border-green-200';
-      case 'blue': return 'bg-blue-50 border-blue-200';
-      case 'orange': return 'bg-orange-50 border-orange-200';
-      case 'red': return 'bg-red-50 border-red-200';
-      default: return 'bg-gray-50 border-gray-200';
+      case 'green': return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700';
+      case 'blue': return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700';
+      case 'orange': return 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700';
+      case 'red': return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700';
+      default: return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
     }
   };
 
   const getStatusTextColor = () => {
     switch (motivation.color) {
-      case 'green': return 'text-green-800';
-      case 'blue': return 'text-blue-800';
-      case 'orange': return 'text-orange-800';
-      case 'red': return 'text-red-800';
-      default: return 'text-gray-800';
+      case 'green': return 'text-green-800 dark:text-green-300';
+      case 'blue': return 'text-blue-800 dark:text-blue-300';
+      case 'orange': return 'text-orange-800 dark:text-orange-300';
+      case 'red': return 'text-red-800 dark:text-red-300';
+      default: return 'text-gray-800 dark:text-gray-200';
     }
   };
 
@@ -51,8 +51,8 @@ const DailyGoalCard = ({ activities, config, onStartStopwatch }) => {
             <Target className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-800">Meta de Hoy</h3>
-            <p className="text-xs text-gray-600">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Meta de Hoy</h3>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               {new Date().toLocaleDateString('es-ES', { 
                 weekday: 'long', 
                 day: 'numeric', 
@@ -102,42 +102,42 @@ const DailyGoalCard = ({ activities, config, onStartStopwatch }) => {
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
-            <Calendar className="w-4 h-4 text-gray-600" />
+            <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-800">{progress.daysRemaining}</p>
-          <p className="text-xs text-gray-600">días restantes</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{progress.daysRemaining}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">días restantes</p>
         </div>
 
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
-            <TrendingUp className="w-4 h-4 text-blue-600" />
+            <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-800">
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             {progress.progressPercentage.toFixed(0)}%
           </p>
-          <p className="text-xs text-gray-600">completado</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">completado</p>
         </div>
 
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
-            <Flame className="w-4 h-4 text-orange-600" />
+            <Flame className="w-4 h-4 text-orange-600 dark:text-orange-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-800">
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             {progress.hoursRemaining.toFixed(1)}h
           </p>
-          <p className="text-xs text-gray-600">faltan</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">faltan</p>
         </div>
       </div>
 
       {/* Barra de progreso */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-gray-700">Progreso del Mes</span>
-          <span className="text-sm font-bold text-gray-800">
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Progreso del Mes</span>
+          <span className="text-sm font-bold text-gray-800 dark:text-gray-100">
             {progress.totalHours.toFixed(1)}h / {progress.monthlyGoal}h
           </span>
         </div>
-        <div className="relative w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+        <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
           <div
             className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 bg-gradient-to-r ${getStatusColor()}`}
             style={{ width: `${Math.min(progress.progressPercentage, 100)}%` }}
@@ -148,27 +148,27 @@ const DailyGoalCard = ({ activities, config, onStartStopwatch }) => {
       </div>
 
       {/* Proyección */}
-      <div className="bg-gray-50 rounded-xl p-3 mb-4 border-2 border-gray-200">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 mb-4 border-2 border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-gray-600 font-semibold mb-1">Proyección Final</p>
-            <p className="text-lg font-bold text-gray-800">
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">Proyección Final</p>
+            <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
               {progress.projectedTotal.toFixed(1)}h
             </p>
           </div>
           <div className="text-right">
             {progress.willMeetGoal ? (
-              <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
+              <span className="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-xs font-bold">
                 ✅ Alcanzarás meta
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold">
+              <span className="inline-flex items-center gap-1 bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300 px-3 py-1 rounded-full text-xs font-bold">
                 ⚠️ Necesitas más ritmo
               </span>
             )}
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
           Al ritmo actual de {(progress.projectedTotal / progress.daysInMonth).toFixed(1)}h por día
         </p>
       </div>
