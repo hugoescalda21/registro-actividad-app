@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Calendar, Clock, Users, MapPin, FileText, Plus, Trash2 } from 'lucide-react';
-import { addOuting, updateOuting, OUTING_TYPES, getUniqueTerritories } from '../utils/congregationOutingsUtils';
+import { addOuting, updateOuting, OUTING_TYPES, getUniqueTerritories, loadOutings } from '../utils/congregationOutingsUtils';
 
 const OutingForm = ({ outing, onClose, onSuccess, companions }) => {
   const isEditing = !!outing;
@@ -20,7 +20,13 @@ const OutingForm = ({ outing, onClose, onSuccess, companions }) => {
 
   const [newCompanion, setNewCompanion] = useState('');
   const [showCompanionSuggestions, setShowCompanionSuggestions] = useState(false);
-  const [territories] = useState(getUniqueTerritories);
+  const [territories, setTerritories] = useState([]);
+
+  // Cargar territorios únicos al montar el componente
+  useEffect(() => {
+    const outings = loadOutings();
+    setTerritories(getUniqueTerritories(outings));
+  }, []);
 
   const filteredCompanions = companions.filter(c =>
     c.toLowerCase().includes(newCompanion.toLowerCase()) &&
