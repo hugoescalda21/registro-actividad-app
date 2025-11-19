@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 import StopwatchBanner from './components/StopwatchBanner';
 import Header from './components/Header';
 import StatsView from './components/StatsView';
@@ -15,6 +17,13 @@ import { getMonthYear } from './utils/dateUtils';
 import { useNotifications } from './hooks/useNotifications';
 
 function App() {
+  // Configurar StatusBar en plataformas nativas
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: Style.Light });
+      StatusBar.setBackgroundColor({ color: '#2563eb' });
+    }
+  }, []);
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState('register');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -239,7 +248,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen pb-20 md:pb-6">
+    <div className="min-h-screen pb-20 md:pb-6 pt-safe">
       {showStopwatchWidget && <StopwatchBanner />}
       <Header
         publisherType={publisherType}

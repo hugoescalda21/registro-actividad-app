@@ -413,3 +413,16 @@ select {
 .badge-info {
   @apply bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full text-xs font-semibold;
 }
+
+/* Safe Area para dispositivos con notch */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
