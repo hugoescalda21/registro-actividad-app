@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Play, Pause, Square, RotateCcw, Save, X } from 'lucide-react';
 import { useStopwatch } from '../hooks/useStopwatch';
 
@@ -16,6 +16,55 @@ const Stopwatch = ({ onSave, onCancel }) => {
   } = useStopwatch();
 
   const formattedTime = getFormattedTime();
+
+  // Escuchar eventos de los botones del Foreground Service
+  useEffect(() => {
+    const isCapacitor = window.Capacitor !== undefined;
+    if (!isCapacitor) return;
+
+    let listener;
+
+    const setupListener = async () => {
+      try {
+        const { ForegroundService } = await import('@capawesome-team/capacitor-android-foreground-service');
+
+        listener = await ForegroundService.addListener('buttonClicked', (event) => {
+          console.log('[Stopwatch] Botón de notificación presionado:', event);
+
+          switch (event.buttonId) {
+            case 1: // Pausar/Reanudar
+              if (isPaused) {
+                resume();
+              } else {
+                pause();
+              }
+              break;
+            case 2: // Guardar
+              handleSave();
+              break;
+            case 3: // Detener
+              handleStop();
+              break;
+            default:
+              console.log('[Stopwatch] Botón desconocido:', event.buttonId);
+          }
+        });
+
+        console.log('[Stopwatch] Listener de botones configurado');
+      } catch (error) {
+        console.error('[Stopwatch] Error al configurar listener:', error);
+      }
+    };
+
+    setupListener();
+
+    return () => {
+      if (listener) {
+        listener.remove();
+        console.log('[Stopwatch] Listener removido');
+      }
+    };
+  }, [isPaused]); // Dependencia: isPaused para detectar cambios de estado
 
   const handleSave = () => {
     if (time === 0) {

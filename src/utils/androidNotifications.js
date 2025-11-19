@@ -101,7 +101,7 @@ export const showAndroidNotification = async (title, options = {}) => {
   }
 };
 
-// Actualizar notificación del cronómetro específicamente
+// Actualizar notificación del cronómetro usando Foreground Service
 export const updateAndroidStopwatchNotification = async (time, isRunning, isPaused) => {
   console.log('[Android] 🔔 Intentando actualizar notificación del cronómetro...');
   console.log('[Android] Estado:', { time, isRunning, isPaused });
@@ -109,9 +109,10 @@ export const updateAndroidStopwatchNotification = async (time, isRunning, isPaus
   try {
     const isCapacitor = window.Capacitor !== undefined;
 
-    // Si no hay cronómetro activo, no mostrar nada
+    // Si no hay cronómetro activo, detener servicio
     if (!isRunning && time === 0) {
-      console.log('[Android] Cronómetro detenido, no mostrar notificación');
+      console.log('[Android] Cronómetro detenido, ocultando notificación');
+      await hideAndroidStopwatchNotification();
       return;
     }
 
@@ -123,47 +124,33 @@ export const updateAndroidStopwatchNotification = async (time, isRunning, isPaus
     const hoursDecimal = (time / 3600).toFixed(2);
 
     // Estado
-    const status = isPaused ? '⏸️ Pausado' : '⏱️ En curso';
+    const status = isPaused ? 'Pausado' : 'En curso';
 
     if (isCapacitor) {
-      // Usar plugin nativo de Capacitor para Android
-      console.log('[Android] Usando LocalNotifications de Capacitor para cronómetro');
-      const { LocalNotifications } = await import('@capacitor/local-notifications');
+      // Usar Foreground Service para notificación persistente
+      console.log('[Android] Usando ForegroundService de Capacitor para cronómetro');
+      const { ForegroundService } = await import('@capawesome-team/capacitor-android-foreground-service');
 
-      // Verificar permisos primero
-      const permStatus = await LocalNotifications.checkPermissions();
-      if (permStatus.display !== 'granted') {
-        console.warn('[Android] ❌ Permisos de notificación no concedidos');
-        return;
+      // Crear botones de acción
+      const buttons = [];
+      if (isPaused) {
+        buttons.push({ id: 1, title: '▶️ Reanudar' });
+      } else {
+        buttons.push({ id: 1, title: '⏸️ Pausar' });
       }
+      buttons.push({ id: 2, title: '💾 Guardar' });
+      buttons.push({ id: 3, title: '⏹️ Detener' });
 
-      // Cancelar notificación anterior del cronómetro (ID fijo: 999999)
-      try {
-        await LocalNotifications.cancel({ notifications: [{ id: 999999 }] });
-        console.log('[Android] Notificación anterior cancelada');
-      } catch (e) {
-        console.log('[Android] No había notificación anterior o error al cancelar:', e);
-      }
-
-      // Programar nueva notificación persistente
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            title: '⏱️ Cronómetro',
-            body: `${timeStr} (${hoursDecimal}h)\n${status}`,
-            id: 999999, // ID fijo para el cronómetro
-            schedule: { at: new Date(Date.now() + 100) }, // Mostrar inmediatamente
-            sound: null,
-            attachments: null,
-            actionTypeId: '',
-            extra: { time, isRunning, isPaused },
-            ongoing: true, // Notificación persistente
-            autoCancel: false // No se cierra al tocar
-          }
-        ]
+      // Iniciar/Actualizar servicio de primer plano
+      await ForegroundService.startForegroundService({
+        id: 1,
+        title: '⏱️ Cronómetro',
+        body: `${timeStr} (${hoursDecimal}h) - ${status}`,
+        smallIcon: 'ic_launcher',
+        buttons: buttons
       });
 
-      console.log('[Android] ✅ Notificación de cronómetro actualizada:', timeStr);
+      console.log('[Android] ✅ Servicio de primer plano actualizado:', timeStr);
       return;
     }
 
@@ -210,19 +197,19 @@ export const updateAndroidStopwatchNotification = async (time, isRunning, isPaus
   }
 };
 
-// Ocultar notificación del cronómetro
+// Ocultar notificación del cronómetro (detener Foreground Service)
 export const hideAndroidStopwatchNotification = async () => {
   try {
     const isCapacitor = window.Capacitor !== undefined;
 
     if (isCapacitor) {
-      // Usar plugin nativo de Capacitor
-      console.log('[Android] Cancelando notificación de cronómetro (Capacitor)');
-      const { LocalNotifications } = await import('@capacitor/local-notifications');
+      // Detener servicio de primer plano
+      console.log('[Android] Deteniendo servicio de primer plano (Capacitor)');
+      const { ForegroundService } = await import('@capawesome-team/capacitor-android-foreground-service');
 
-      // Cancelar notificación del cronómetro (ID fijo: 999999)
-      await LocalNotifications.cancel({ notifications: [{ id: 999999 }] });
-      console.log('[Android] ✅ Notificación de cronómetro cancelada');
+      // Detener servicio de primer plano
+      await ForegroundService.stopForegroundService();
+      console.log('[Android] ✅ Servicio de primer plano detenido');
       return;
     }
 
