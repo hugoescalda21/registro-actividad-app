@@ -11,8 +11,13 @@ import {
 import ReturnVisitCard from './ReturnVisitCard';
 import ReturnVisitForm from './ReturnVisitForm';
 import ReturnVisitDetail from './ReturnVisitDetail';
+import ReturnVisitReminders from './ReturnVisitReminders';
+import { useReturnVisitReminders } from '../hooks/useReturnVisitReminders';
 
 const ReturnVisitsView = () => {
+  // Activar recordatorios de revisitas
+  useReturnVisitReminders();
+
   const [returnVisits, setReturnVisits] = useState([]);
   const [filteredVisits, setFilteredVisits] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -130,6 +135,13 @@ const ReturnVisitsView = () => {
             <div className="text-xs text-gray-600 dark:text-gray-400">Visitas</div>
           </div>
         </div>
+
+        {/* Recordatorios */}
+        <ReturnVisitReminders
+          onVisitClick={(visit) => {
+            setSelectedVisit(visit);
+          }}
+        />
 
         {/* Botón agregar */}
         <button

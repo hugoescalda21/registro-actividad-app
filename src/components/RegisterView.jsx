@@ -3,6 +3,7 @@ import { Calendar, Clock, BookOpen, Award, FileText, Save, X, CheckCircle, BarCh
 import Stopwatch from './Stopwatch';
 import LoadingSpinner from './LoadingSpinner';
 import DailyGoalCard from './DailyGoalCard';
+import PersonalGoalsWidget from './PersonalGoalsWidget';
 import { formatDateWithWeekday } from '../utils/dateUtils';
 
 const RegisterView = ({
@@ -142,6 +143,11 @@ const RegisterView = ({
             setShowForm(false);
           }}
         />
+      )}
+
+      {/* Metas Personales */}
+      {!showForm && !showStopwatch && (
+        <PersonalGoalsWidget activities={activities} />
       )}
 
       {/* Card de Estadísticas */}
