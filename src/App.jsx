@@ -261,6 +261,7 @@ function App() {
               triggerFormOpen={triggerFormOpen}
               triggerStopwatchOpen={triggerStopwatchOpen}
               editingActivity={editingActivity}
+              onViewChange={setCurrentView}
             />
           )}
 

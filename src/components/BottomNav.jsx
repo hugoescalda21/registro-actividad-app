@@ -108,31 +108,31 @@ const BottomNav = ({ currentView, onViewChange, onNewActivity, onStopwatch, show
               )}
             </button>
 
-            {/* Estadísticas */}
+            {/* Planificación */}
             <button
               onClick={() => {
                 setShowMenu(false);
-                onViewChange('stats');
+                onViewChange('planning');
               }}
               className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all duration-200 active:scale-95 ${
-                currentView === 'stats'
+                currentView === 'planning'
                   ? 'bg-blue-50'
                   : 'hover:bg-gray-50'
               }`}
             >
               <div className={`p-2.5 rounded-full mb-1 ${
-                currentView === 'stats'
+                currentView === 'planning'
                   ? 'bg-blue-600'
                   : 'bg-gray-200'
               }`}>
-                <BarChart3 className={`w-6 h-6 ${
-                  currentView === 'stats' ? 'text-white' : 'text-gray-600'
+                <Calendar className={`w-6 h-6 ${
+                  currentView === 'planning' ? 'text-white' : 'text-gray-600'
                 }`} />
               </div>
               <span className={`text-xs font-semibold ${
-                currentView === 'stats' ? 'text-blue-600' : 'text-gray-600'
+                currentView === 'planning' ? 'text-blue-600' : 'text-gray-600'
               }`}>
-                Stats
+                Plan
               </span>
             </button>
 

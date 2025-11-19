@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, BookOpen, Award, FileText, Save, X, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, BookOpen, Award, FileText, Save, X, CheckCircle, BarChart3, TrendingUp } from 'lucide-react';
 import Stopwatch from './Stopwatch';
 import LoadingSpinner from './LoadingSpinner';
 import DailyGoalCard from './DailyGoalCard';
 import { formatDateWithWeekday } from '../utils/dateUtils';
 
-const RegisterView = ({ 
-  onSave, 
+const RegisterView = ({
+  onSave,
   onUpdate,
-  config, 
-  activities, 
-  triggerFormOpen, 
+  config,
+  activities,
+  triggerFormOpen,
   triggerStopwatchOpen,
-  editingActivity
+  editingActivity,
+  onViewChange
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [showStopwatch, setShowStopwatch] = useState(false);
@@ -133,7 +134,7 @@ const RegisterView = ({
     <div className="space-y-6 animate-fadeIn">
       {/* Tarjeta de Meta Diaria - Solo si no hay formulario ni cronómetro abierto */}
       {!showForm && !showStopwatch && (
-        <DailyGoalCard 
+        <DailyGoalCard
           activities={activities}
           config={config}
           onStartStopwatch={() => {
@@ -141,6 +142,37 @@ const RegisterView = ({
             setShowForm(false);
           }}
         />
+      )}
+
+      {/* Card de Estadísticas */}
+      {!showForm && !showStopwatch && onViewChange && (
+        <button
+          onClick={() => onViewChange('stats')}
+          className="w-full card-gradient p-6 hover:shadow-xl transition-all duration-200 hover:-translate-y-1 active:scale-95 border-2 border-transparent hover:border-blue-300 dark:hover:border-blue-700 text-left group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                <BarChart3 className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-1 flex items-center gap-2">
+                  Ver Estadísticas
+                  <TrendingUp className="w-5 h-5 text-green-500 group-hover:translate-x-1 transition-transform" />
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Análisis detallado de tu actividad
+                </p>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold">
+              <span>Ver más</span>
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </button>
       )}
 
       {/* Última actividad registrada */}
