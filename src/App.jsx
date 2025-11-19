@@ -7,7 +7,6 @@ import HistoryView from './components/HistoryView';
 import PlanningView from './components/PlanningView';
 import ReturnVisitsView from './components/ReturnVisitsView';
 import SettingsModal from './components/SettingsModal';
-import StopwatchWidget from './components/StopwatchWidget';
 import FloatingActionButton from './components/FloatingActionButton';
 import BottomNav from './components/BottomNav';
 import { useToast } from './contexts/ToastContext';
@@ -315,11 +314,6 @@ function App() {
           canUseStopwatch={publisherTypes[publisherType].canLogHours}
         />
       </div>
-
-      {/* Widget flotante del cronómetro */}
-      {showStopwatchWidget && (
-        <StopwatchWidget onOpen={handleOpenStopwatch} />
-      )}
 
       {showSettingsModal && (
         <SettingsModal
