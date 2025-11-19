@@ -11,25 +11,45 @@ import {
 } from '../utils/notificationUtils';
 
 const NotificationSettings = ({ onClose }) => {
-  const [permission, setPermission] = useState(() => {
-    try {
-      return typeof Notification !== 'undefined' ? Notification.permission : 'default';
-    } catch {
-      return 'default';
-    }
-  });
+  const [permission, setPermission] = useState('default');
   const [settings, setSettings] = useState(loadNotificationSettings());
   const [isSupported] = useState(isNotificationSupported());
 
+  // Verificar permisos al montar el componente
   useEffect(() => {
-    try {
-      if (typeof Notification !== 'undefined') {
-        setPermission(Notification.permission);
+    const checkPermissions = async () => {
+      try {
+        const isCapacitor = window.Capacitor !== undefined;
+        let currentPermission = 'default';
+
+        if (isCapacitor) {
+          // Verificar permisos nativos de Android
+          const { LocalNotifications } = await import('@capacitor/local-notifications');
+          const permStatus = await LocalNotifications.checkPermissions();
+          console.log('[NotificationSettings] Estado de permisos nativos:', permStatus);
+          currentPermission = permStatus.display;
+        } else if (typeof Notification !== 'undefined') {
+          // Verificar permisos web
+          currentPermission = Notification.permission;
+        }
+
+        setPermission(currentPermission);
+
+        // Si los permisos fueron revocados pero settings.enabled está en true, desactivar
+        if (currentPermission !== 'granted' && settings.enabled) {
+          console.log('[NotificationSettings] Permisos revocados, desactivando notificaciones en settings');
+          const newSettings = { ...settings, enabled: false };
+          setSettings(newSettings);
+          saveNotificationSettings(newSettings);
+        }
+      } catch (error) {
+        console.log('[NotificationSettings] Error al verificar permisos:', error);
+        setPermission('default');
       }
-    } catch (error) {
-      console.log('Notification API not available:', error);
-    }
-  }, []);
+    };
+
+    checkPermissions();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRequestPermission = async () => {
     const result = await requestNotificationPermission();
@@ -43,7 +63,22 @@ const NotificationSettings = ({ onClose }) => {
     }
   };
 
-  const handleSettingChange = (key, value) => {
+  const handleSettingChange = async (key, value) => {
+    // Si el usuario está activando las notificaciones, verificar permisos primero
+    if (key === 'enabled' && value === true) {
+      if (permission !== 'granted') {
+        // Solicitar permisos
+        const result = await requestNotificationPermission();
+        setPermission(result);
+
+        if (result !== 'granted') {
+          // Si no se conceden permisos, no activar
+          alert('⚠️ Necesitas conceder permisos de notificaciones para activar esta función.');
+          return;
+        }
+      }
+    }
+
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     saveNotificationSettings(newSettings);
