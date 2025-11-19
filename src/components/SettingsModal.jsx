@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, User, Download, Upload, Share2, Bell, Sun, Moon, Monitor, FileText } from 'lucide-react';
+import { X, User, Download, Upload, Share2, Bell, Sun, Moon, Monitor, FileText, Cloud } from 'lucide-react';
 import NotificationSettings from './NotificationSettings';
+import GoogleDriveBackup from './GoogleDriveBackup';
 import { useThemeContext } from '../contexts/ThemeContext';
 import { generateMonthlyReportPDF } from '../utils/pdfGenerator';
 
@@ -162,6 +163,17 @@ ${config.emoji} ${config.label}
           >
             <User className="w-4 h-4" />
             General
+          </button>
+          <button
+            onClick={() => setActiveTab('backup')}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all rounded-t-lg ${
+              activeTab === 'backup'
+                ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 border-b-2 border-blue-600'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+          >
+            <Cloud className="w-4 h-4" />
+            Nube
           </button>
           <button
             onClick={() => setActiveTab('notifications')}
@@ -361,6 +373,27 @@ ${config.emoji} ${config.label}
                   <p><strong>Tipo actual:</strong> {publisherTypes[publisherType].label}</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'backup' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-2">
+                  <Cloud className="w-5 h-5 text-blue-600" />
+                  Respaldo en la Nube
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Sincroniza y respalda tus datos de forma segura en Google Drive.
+                  Accede a ellos desde cualquier dispositivo.
+                </p>
+              </div>
+
+              <GoogleDriveBackup
+                activities={activities}
+                publisherType={publisherType}
+                onImport={onImport}
+              />
             </div>
           )}
 
