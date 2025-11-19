@@ -100,16 +100,36 @@ npm run deploy
 
 Para habilitar la funcionalidad de respaldo en Google Drive:
 
-1. Sigue la guía detallada en [GOOGLE_DRIVE_SETUP.md](./GOOGLE_DRIVE_SETUP.md)
-2. Crea un proyecto en [Google Cloud Console](https://console.cloud.google.com/)
-3. Habilita Google Drive API
-4. Crea credenciales OAuth 2.0
-5. Configura las variables de entorno:
+**Opción 1: Configuración Guiada (Recomendado)**
 
-```env
-VITE_GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
-VITE_GOOGLE_API_KEY=tu-api-key
+```bash
+# Ejecutar el asistente de configuración
+npm run setup:google
+
+# Seguir las instrucciones en pantalla
 ```
+
+**Opción 2: Manual**
+
+1. Copia el archivo de ejemplo:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Sigue la guía paso a paso: [GUIA_CONFIGURACION_GOOGLE.md](./GUIA_CONFIGURACION_GOOGLE.md)
+
+3. O sigue la guía técnica: [GOOGLE_DRIVE_SETUP.md](./GOOGLE_DRIVE_SETUP.md)
+
+4. Edita `.env` con tus credenciales:
+   ```env
+   VITE_GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+   VITE_GOOGLE_API_KEY=tu-api-key
+   ```
+
+5. Reinicia el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
 
 **Nota**: La app funciona completamente sin Google Drive. Esta característica es opcional para respaldo en la nube.
 

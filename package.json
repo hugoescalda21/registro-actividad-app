@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "setup:google": "node scripts/setup-google-drive.js"
   },
   "dependencies": {
     "gapi-script": "^1.2.0",
