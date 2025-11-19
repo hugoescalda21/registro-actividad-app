@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Registro de Actividad</string>
+    <string name="title_activity_main">Registro de Actividad</string>
+    <string name="package_name">com.congregacion.registroactividad</string>
+    <string name="custom_url_scheme">com.congregacion.registroactividad</string>
+</resources>
