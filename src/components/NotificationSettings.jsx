@@ -11,12 +11,24 @@ import {
 } from '../utils/notificationUtils';
 
 const NotificationSettings = ({ onClose }) => {
-  const [permission, setPermission] = useState(Notification.permission);
+  const [permission, setPermission] = useState(() => {
+    try {
+      return typeof Notification !== 'undefined' ? Notification.permission : 'default';
+    } catch {
+      return 'default';
+    }
+  });
   const [settings, setSettings] = useState(loadNotificationSettings());
   const [isSupported] = useState(isNotificationSupported());
 
   useEffect(() => {
-    setPermission(Notification.permission);
+    try {
+      if (typeof Notification !== 'undefined') {
+        setPermission(Notification.permission);
+      }
+    } catch (error) {
+      console.log('Notification API not available:', error);
+    }
   }, []);
 
   const handleRequestPermission = async () => {
