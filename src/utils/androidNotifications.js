@@ -36,20 +36,55 @@ export const requestAndroidNotificationPermission = async () => {
   }
 };
 
-// Mostrar notificación usando Service Worker (mejor para Android)
+// Mostrar notificación nativa en Android usando Capacitor
 export const showAndroidNotification = async (title, options = {}) => {
-  if (!('serviceWorker' in navigator)) {
-    console.warn('Service Worker no disponible');
-    return false;
-  }
-
   try {
+    const isCapacitor = window.Capacitor !== undefined;
+
+    if (isCapacitor) {
+      // Usar plugin nativo de Capacitor
+      console.log('[Android] Usando LocalNotifications de Capacitor');
+      const { LocalNotifications } = await import('@capacitor/local-notifications');
+
+      // Verificar permisos primero
+      const permStatus = await LocalNotifications.checkPermissions();
+      if (permStatus.display !== 'granted') {
+        console.warn('[Android] Permisos de notificación no concedidos');
+        return false;
+      }
+
+      // Programar notificación inmediata
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: title,
+            body: options.body || '',
+            id: Math.floor(Math.random() * 1000000),
+            schedule: { at: new Date(Date.now() + 100) }, // Mostrar inmediatamente
+            sound: null,
+            attachments: null,
+            actionTypeId: '',
+            extra: null
+          }
+        ]
+      });
+
+      console.log('[Android] ✅ Notificación programada:', title);
+      return true;
+    }
+
+    // Fallback para navegador web
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service Worker no disponible');
+      return false;
+    }
+
     const registration = await navigator.serviceWorker.ready;
-    
+
     const defaultOptions = {
       body: '',
-      icon: '/registro-actividad-app/icon-192.png',
-      badge: '/registro-actividad-app/icon-192.png',
+      icon: './icon-192.png',
+      badge: './icon-192.png',
       vibrate: [200, 100, 200],
       tag: 'default',
       requireInteraction: false,
@@ -58,10 +93,10 @@ export const showAndroidNotification = async (title, options = {}) => {
     };
 
     await registration.showNotification(title, defaultOptions);
-    console.log('Notificación mostrada:', title);
+    console.log('Notificación web mostrada:', title);
     return true;
   } catch (error) {
-    console.error('Error al mostrar notificación:', error);
+    console.error('[Android] Error al mostrar notificación:', error);
     return false;
   }
 };
