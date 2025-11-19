@@ -22,16 +22,21 @@ export const useStopwatchNotification = (time, isRunning, isPaused) => {
       return;
     }
 
-    // Verificar Service Worker
-    if (!('serviceWorker' in navigator)) {
-      console.warn('[useStopwatchNotification] Service Worker no disponible');
-      return;
-    }
+    // En Capacitor Android, las notificaciones funcionan de manera diferente
+    const isCapacitor = window.Capacitor !== undefined;
 
-    // Verificar permiso
-    if (Notification.permission !== 'granted') {
-      console.warn('[useStopwatchNotification] Sin permiso de notificaciones:', Notification.permission);
-      return;
+    if (!isCapacitor) {
+      // Solo verificar Service Worker y permisos en web
+      if (!('serviceWorker' in navigator)) {
+        console.warn('[useStopwatchNotification] Service Worker no disponible');
+        return;
+      }
+
+      // Verificar permiso solo en web
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+        console.warn('[useStopwatchNotification] Sin permiso de notificaciones');
+        return;
+      }
     }
 
     console.log('[useStopwatchNotification] ✅ Todas las validaciones pasadas');
