@@ -6,6 +6,7 @@ import RegisterView from './components/RegisterView';
 import HistoryView from './components/HistoryView';
 import PlanningView from './components/PlanningView';
 import ReturnVisitsView from './components/ReturnVisitsView';
+import CongregationOutingsView from './components/CongregationOutingsView';
 import SettingsModal from './components/SettingsModal';
 import FloatingActionButton from './components/FloatingActionButton';
 import BottomNav from './components/BottomNav';
@@ -290,6 +291,10 @@ function App() {
 
           {currentView === 'returnVisits' && (
             <ReturnVisitsView />
+          )}
+
+          {currentView === 'outings' && (
+            <CongregationOutingsView />
           )}
         </div>
       </main>

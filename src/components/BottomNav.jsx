@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, BarChart3, History, Timer, Edit, X, Calendar, Users } from 'lucide-react';
+import { Plus, BarChart3, History, Timer, Edit, X, Calendar, Users, MapPinned } from 'lucide-react';
 
 const BottomNav = ({ currentView, onViewChange, onNewActivity, onStopwatch, showStopwatch, canUseStopwatch }) => {
   const [showMenu, setShowMenu] = useState(false);
@@ -81,7 +81,7 @@ const BottomNav = ({ currentView, onViewChange, onNewActivity, onStopwatch, show
       {/* Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl z-50 safe-area-bottom">
         <div className="max-w-4xl mx-auto px-2 py-2">
-          <div className="grid grid-cols-5 gap-1">
+          <div className="grid grid-cols-6 gap-1">
             {/* Nueva Actividad */}
             <button
               onClick={handleNewClick}
@@ -161,6 +161,34 @@ const BottomNav = ({ currentView, onViewChange, onNewActivity, onStopwatch, show
                 currentView === 'returnVisits' ? 'text-blue-600' : 'text-gray-600'
               }`}>
                 Revisitas
+              </span>
+            </button>
+
+            {/* Salidas */}
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                onViewChange('outings');
+              }}
+              className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all duration-200 active:scale-95 ${
+                currentView === 'outings'
+                  ? 'bg-blue-50'
+                  : 'hover:bg-gray-50'
+              }`}
+            >
+              <div className={`p-2.5 rounded-full mb-1 ${
+                currentView === 'outings'
+                  ? 'bg-blue-600'
+                  : 'bg-gray-200'
+              }`}>
+                <MapPinned className={`w-6 h-6 ${
+                  currentView === 'outings' ? 'text-white' : 'text-gray-600'
+                }`} />
+              </div>
+              <span className={`text-xs font-semibold ${
+                currentView === 'outings' ? 'text-blue-600' : 'text-gray-600'
+              }`}>
+                Salidas
               </span>
             </button>
 
