@@ -241,7 +241,7 @@ const OutingForm = ({ outing, onClose, onSuccess, companions }) => {
                        focus:border-blue-500 transition-all"
             />
             <datalist id="territories">
-              {territories().map((territory, index) => (
+              {territories.map((territory, index) => (
                 <option key={index} value={territory} />
               ))}
             </datalist>
