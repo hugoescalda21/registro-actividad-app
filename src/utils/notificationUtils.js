@@ -4,6 +4,16 @@
 
 // Verificar soporte de notificaciones
 export const isNotificationSupported = () => {
+  // En Android/iOS con Capacitor, las notificaciones nativas están disponibles
+  const isCapacitor = window.Capacitor !== undefined;
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  // Si es una app Capacitor o móvil, asumimos que soporta notificaciones
+  if (isCapacitor || isMobile) {
+    return true;
+  }
+
+  // Para web, verificar la API de Notification
   return 'Notification' in window;
 };
 
@@ -14,18 +24,44 @@ export const requestNotificationPermission = async () => {
   }
 
   try {
-    const permission = await Notification.requestPermission();
-    return permission;
+    // En Capacitor/móvil, asumir que los permisos se manejan nativamente
+    const isCapacitor = window.Capacitor !== undefined;
+    if (isCapacitor) {
+      // En Capacitor, los permisos se manejan a nivel nativo
+      return 'granted';
+    }
+
+    // Para web, usar la API estándar
+    if (typeof Notification !== 'undefined' && Notification.requestPermission) {
+      const permission = await Notification.requestPermission();
+      return permission;
+    }
+
+    return 'granted'; // Para móvil sin Notification API
   } catch (error) {
     console.error('Error al solicitar permiso:', error);
-    return 'error';
+    return 'granted'; // Asumir concedido en caso de error en móvil
   }
 };
 
 // Verificar si hay permiso
 export const hasNotificationPermission = () => {
   if (!isNotificationSupported()) return false;
-  return Notification.permission === 'granted';
+
+  const isCapacitor = window.Capacitor !== undefined;
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  // En Capacitor o móvil, asumir que hay permiso (se maneja nativamente)
+  if (isCapacitor || isMobile) {
+    return true;
+  }
+
+  // Para web, verificar la API de Notification
+  try {
+    return typeof Notification !== 'undefined' && Notification.permission === 'granted';
+  } catch {
+    return false;
+  }
 };
 
 // Detectar si está en Android
