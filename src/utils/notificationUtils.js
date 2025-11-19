@@ -24,11 +24,31 @@ export const requestNotificationPermission = async () => {
   }
 
   try {
-    // En Capacitor/móvil, asumir que los permisos se manejan nativamente
+    // En Capacitor/móvil, usar el plugin de Local Notifications
     const isCapacitor = window.Capacitor !== undefined;
     if (isCapacitor) {
-      // En Capacitor, los permisos se manejan a nivel nativo
-      return 'granted';
+      try {
+        const { LocalNotifications } = await import('@capacitor/local-notifications');
+
+        // Verificar permisos actuales
+        const permStatus = await LocalNotifications.checkPermissions();
+        console.log('[requestNotificationPermission] Estado actual:', permStatus);
+
+        if (permStatus.display === 'granted') {
+          console.log('[requestNotificationPermission] Permisos ya concedidos');
+          return 'granted';
+        }
+
+        // Solicitar permisos nativos de Android
+        console.log('[requestNotificationPermission] Solicitando permisos nativos...');
+        const result = await LocalNotifications.requestPermissions();
+        console.log('[requestNotificationPermission] Resultado:', result);
+
+        return result.display === 'granted' ? 'granted' : 'denied';
+      } catch (error) {
+        console.error('[requestNotificationPermission] Error al solicitar permisos nativos:', error);
+        return 'denied';
+      }
     }
 
     // Para web, usar la API estándar
@@ -40,7 +60,7 @@ export const requestNotificationPermission = async () => {
     return 'granted'; // Para móvil sin Notification API
   } catch (error) {
     console.error('Error al solicitar permiso:', error);
-    return 'granted'; // Asumir concedido en caso de error en móvil
+    return 'denied';
   }
 };
 
