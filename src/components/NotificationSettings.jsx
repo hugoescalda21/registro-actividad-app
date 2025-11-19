@@ -81,33 +81,6 @@ const NotificationSettings = ({ onClose }) => {
     handleSettingChange('customReminders', newReminders);
   };
 
-  {/* Botón de prueba Android */}
-{isAndroid() && (
-  <button
-    onClick={async () => {
-      const { showAndroidNotification } = await import('../utils/androidNotifications');
-      const success = await showAndroidNotification('🧪 Prueba Android', {
-        body: 'Notificación de prueba para Android',
-        tag: 'test-android',
-        requireInteraction: true,
-        actions: [
-          { action: 'ok', title: '✅ OK' },
-          { action: 'cancel', title: '❌ Cancelar' }
-        ]
-      });
-      if (success) {
-        alert('✅ Notificación enviada (revisa la barra de notificaciones)');
-      } else {
-        alert('❌ Error al enviar notificación');
-      }
-    }}
-    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg"
-  >
-    <Bell className="w-5 h-5" />
-    Probar Notificación Android
-  </button>
-)}
-
   const weekDays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
   if (!isSupported) {
@@ -481,6 +454,33 @@ const NotificationSettings = ({ onClose }) => {
                 <Bell className="w-5 h-5" />
                 Enviar Notificación de Prueba
               </button>
+
+              {/* Botón de prueba Android */}
+              {isAndroid() && (
+                <button
+                  onClick={async () => {
+                    const { showAndroidNotification } = await import('../utils/androidNotifications');
+                    const success = await showAndroidNotification('🧪 Prueba Android', {
+                      body: 'Notificación de prueba para Android',
+                      tag: 'test-android',
+                      requireInteraction: true,
+                      actions: [
+                        { action: 'ok', title: '✅ OK' },
+                        { action: 'cancel', title: '❌ Cancelar' }
+                      ]
+                    });
+                    if (success) {
+                      alert('✅ Notificación enviada (revisa la barra de notificaciones)');
+                    } else {
+                      alert('❌ Error al enviar notificación');
+                    }
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <Bell className="w-5 h-5" />
+                  Probar Notificación Android
+                </button>
+              )}
             </div>
           )}
         </>
