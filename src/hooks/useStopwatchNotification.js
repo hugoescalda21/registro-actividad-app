@@ -36,16 +36,16 @@ export const useStopwatchNotification = (time, isRunning, isPaused) => {
 
     console.log('[useStopwatchNotification] ✅ Todas las validaciones pasadas');
 
-    const updateNotification = async () => {
-      // Solo actualizar cada 5 segundos
+    const updateNotification = async (forceUpdate = false) => {
+      // Solo actualizar cada 5 segundos (excepto si es forzado)
       const now = Date.now();
-      if (now - lastNotificationTime.current < 5000) {
+      if (!forceUpdate && now - lastNotificationTime.current < 5000) {
         console.log('[useStopwatchNotification] Esperando cooldown (< 5s)');
         return;
       }
       lastNotificationTime.current = now;
 
-      console.log('[useStopwatchNotification] Actualizando notificación...');
+      console.log('[useStopwatchNotification] Actualizando notificación...', { forceUpdate });
 
       // Usar sistema específico para Android
       if (isAndroid()) {
@@ -70,8 +70,8 @@ export const useStopwatchNotification = (time, isRunning, isPaused) => {
 
     if (isRunning || time > 0) {
       console.log('[useStopwatchNotification] Cronómetro activo, configurando notificaciones');
-      // Mostrar notificación inicial
-      updateNotification();
+      // Mostrar notificación inicial (forzada para ignorar cooldown)
+      updateNotification(true);
 
       // Actualizar cada 5 segundos
       notificationUpdateInterval.current = setInterval(updateNotification, 5000);

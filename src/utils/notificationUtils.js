@@ -210,17 +210,8 @@ export const saveNotificationSettings = (settings) => {
 
 // Cargar configuración de notificaciones
 export const loadNotificationSettings = () => {
-  const saved = localStorage.getItem('notificationSettings');
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch (error) {
-      console.error('Error al cargar configuración:', error);
-    }
-  }
-  
   // Configuración por defecto
-  return {
+  const defaultSettings = {
     enabled: false,
     dailyReminder: false,
     dailyReminderTime: '20:00',
@@ -234,4 +225,17 @@ export const loadNotificationSettings = () => {
     vibration: true,
     persistentStopwatch: true
   };
+
+  const saved = localStorage.getItem('notificationSettings');
+  if (saved) {
+    try {
+      const savedSettings = JSON.parse(saved);
+      // Hacer merge con valores por defecto para asegurar que todos los campos existan
+      return { ...defaultSettings, ...savedSettings };
+    } catch (error) {
+      console.error('Error al cargar configuración:', error);
+    }
+  }
+
+  return defaultSettings;
 };
