@@ -10,10 +10,11 @@
 
 import { gapi } from 'gapi-script';
 
-// ⚠️ CONFIGURACIÓN REQUERIDA
-// Obtén tu Client ID en: https://console.cloud.google.com/apis/credentials
-const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE';
-const API_KEY = process.env.VITE_GOOGLE_API_KEY || 'YOUR_API_KEY_HERE';
+// ✅ CONFIGURACIÓN DE GOOGLE DRIVE API
+// Credenciales OAuth 2.0 configuradas en Google Cloud Console
+// Estas credenciales están restringidas al dominio hugoescalda21.github.io
+const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID || '887166944946-7d64fja68236059aburt51fhekski4um.apps.googleusercontent.com';
+const API_KEY = process.env.VITE_GOOGLE_API_KEY || 'AIzaSyDoBHW84Jl4WqnLtw8kY076TgM9uEsbV-E';
 
 // Scopes necesarios
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
