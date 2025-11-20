@@ -19,7 +19,7 @@ const SettingsModal = ({
 
   if (!isOpen) return null;
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const data = {
       publisherType,
       activities,
@@ -27,13 +27,51 @@ const SettingsModal = ({
       version: '2.3'
     };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `registro-actividad-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const jsonContent = JSON.stringify(data, null, 2);
+    const fileName = `registro-actividad-backup-${new Date().toISOString().split('T')[0]}.json`;
+
+    // Detectar si estamos en Capacitor (Android/iOS)
+    const isCapacitor = window.Capacitor !== undefined;
+
+    if (isCapacitor) {
+      try {
+        // Usar filesystem nativo de Capacitor
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
+
+        // Guardar archivo en el directorio de cache (temporal)
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: jsonContent,
+          directory: Directory.Cache,
+          encoding: 'utf8'
+        });
+
+        console.log('[Export] Archivo guardado:', result.uri);
+
+        // Compartir el archivo usando el sistema de compartir nativo
+        await Share.share({
+          title: 'Exportar Respaldo',
+          text: 'Respaldo de Registro de Actividad',
+          url: result.uri,
+          dialogTitle: 'Guardar respaldo'
+        });
+
+        console.log('[Export] ✅ Archivo exportado exitosamente');
+      } catch (error) {
+        console.error('[Export] Error al exportar:', error);
+        alert('Error al exportar el respaldo. Inténtalo de nuevo.');
+      }
+    } else {
+      // Método tradicional para navegador web
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const handleImport = (event) => {
@@ -60,7 +98,7 @@ const SettingsModal = ({
     reader.readAsText(file);
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     try {
       const now = new Date();
       const currentMonth = now.getMonth() + 1;
@@ -86,7 +124,7 @@ const SettingsModal = ({
 
       const publisherTypeName = config.label;
 
-      generateMonthlyReportPDF({
+      const pdfResult = generateMonthlyReportPDF({
         activities: monthActivities,
         stats,
         config,
@@ -94,6 +132,40 @@ const SettingsModal = ({
         month: currentMonth,
         year: currentYear
       });
+
+      // Detectar si estamos en Capacitor
+      const isCapacitor = window.Capacitor !== undefined;
+
+      if (isCapacitor) {
+        // Usar filesystem nativo de Capacitor
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
+
+        // Convertir PDF a base64
+        const base64Data = pdfResult.getBase64();
+
+        // Guardar PDF en el directorio de cache
+        const result = await Filesystem.writeFile({
+          path: pdfResult.fileName,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+
+        console.log('[PDF Export] Archivo guardado:', result.uri);
+
+        // Compartir el PDF usando el sistema de compartir nativo
+        await Share.share({
+          title: 'Exportar Informe PDF',
+          text: 'Informe mensual de actividad',
+          url: result.uri,
+          dialogTitle: 'Guardar informe'
+        });
+
+        console.log('[PDF Export] ✅ PDF exportado exitosamente');
+      } else {
+        // Método tradicional para navegador web
+        pdfResult.save();
+      }
     } catch (error) {
       console.error('Error al generar PDF:', error);
       alert('Error al generar el PDF. Por favor, inténtalo de nuevo.');

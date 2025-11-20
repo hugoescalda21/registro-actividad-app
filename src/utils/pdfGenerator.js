@@ -210,8 +210,18 @@ export const generateMonthlyReportPDF = (data) => {
   }
 
   const fileName = `informe-actividad-${monthName.toLowerCase()}-${year}.pdf`;
-  doc.save(fileName);
-  return fileName;
+
+  // Devolver el documento y nombre para manejo personalizado
+  return {
+    doc,
+    fileName,
+    // Método de compatibilidad para navegador
+    save: () => doc.save(fileName),
+    // Método para obtener blob (para Capacitor)
+    getBlob: () => doc.output('blob'),
+    // Método para obtener base64 (para Capacitor)
+    getBase64: () => doc.output('datauristring').split(',')[1]
+  };
 };
 
 function addFooter(doc, pageNumber, pageWidth, pageHeight) {
